@@ -459,6 +459,17 @@ dialog.full.drag { outline: 3px dashed var(--accent); outline-offset: -6px; }
   .topbar .btn { padding: 6px 9px; }
   .topbar h1 { font-size: 15px; }
 }
+/* запомненные решения */
+.ck-decide { margin-top: 6px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.ck-rule { margin-top: 3px; color: var(--ok); font-size: 12.5px; }
+.ck-rules-box { flex: none; padding: 10px 20px; border-bottom: 1px solid var(--line); max-height: 40vh; overflow: auto; background: var(--pane); font-size: 13px; }
+.ck-rules-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 4px; }
+.ck-rules-head .spacer { flex: 1; }
+.ck-rules { list-style: none; margin: 8px 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.ck-rules li { background: var(--paper); border: 1px solid var(--line-soft); border-radius: 4px; padding: 6px 9px; }
+.ck-rules .s { margin-top: 3px; font-size: 12.5px; color: var(--muted); display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.ck-minor { margin-top: 6px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.ck-minor .pill .ck-link { text-decoration: none; margin-left: 2px; }
 
 </style>
 <script>
@@ -795,9 +806,11 @@ try { var t = (JSON.parse(localStorage.getItem('dovk_ui_v1') || '{}') || {}).the
     <button type="button" class="btn" id="btnCkPaste">Вставить текст</button>
     <span id="ckFileName" class="muted"></span>
     <span class="spacer"></span>
+    <button type="button" class="btn small" id="btnCkRules" title="Решения проверяющего, которые конструктор запомнил: какие абзацы охватываются пунктами, какие слова не меняют смысл">Запомненные решения</button>
     <label for="ckPoa" class="muted">Основная доверенность</label>
     <select id="ckPoa"></select>
   </div>
+  <div class="ck-rules-box" id="ckRulesBox" hidden></div>
   <div class="ck-paste" id="ckPasteBox" hidden>
     <textarea id="ckText" placeholder="Вставьте текст проекта целиком: от преамбулы до подписи. Каждый абзац с новой строки."></textarea>
     <div class="row tight"><button type="button" class="btn primary" id="btnCkRun">Проверить</button><span class="muted">Текст из СЭД, Word или PDF; строки, оборванные посреди фразы, склеиваются сами.</span></div>
@@ -869,6 +882,8 @@ try { var t = (JSON.parse(localStorage.getItem('dovk_ui_v1') || '{}') || {}).the
       <li>Слева проект по абзацам, справа основная доверенность. Цвет полосы у абзаца: зеленый (совпадает), синий (сужен: из пункта только исключены слова), оранжевый (есть добавленные слова или частичное сходство), красный (такого полномочия в основной доверенности нет).</li>
       <li><b>Щелчок по абзацу проекта</b> подсвечивает пункт основной доверенности, из которого он взят, и показывает под ним, что исключено (зачеркнуто) и что добавлено (подчеркнуто). <b>Выделите мышью фрагмент</b> абзаца, чтобы найти именно его: совпавшие слова подсветятся в пункте. <b>Щелчок по пункту основной доверенности</b> показывает, где он в проекте.</li>
       <li>Если абзац сопоставлен не с тем пунктом (например, одинаковый текст есть в нескольких блоках), выберите нужный пункт в списке над основной доверенностью кнопкой «Сопоставить».</li>
+      <li><b>Конкретизация</b>: абзац своими словами перечисляет частные случаи того, что есть в пункте основной доверенности (например, «утверждать приказы о командировках, об отпусках» при пункте «утверждать ... приказы и распоряжения»). Совпавшие слова подсвечиваются; проверьте, что все перечисленное охватывается пунктом.</li>
+      <li><b>Решения проверяющего запоминаются.</b> Если абзац, по вашему мнению, охватывается пунктом, нажмите «Охватывается пунктом, запомнить»: в следующих проверках дословно такой же абзац получит статус «принято проверяющим». Если программа сочла добавлением слово, которое не меняет объем полномочия, отметьте его кнопкой «... не меняет смысл». Ручное сопоставление тоже запоминается. Список решений, удаление, сохранение в файл и загрузка: кнопка «Запомненные решения». Решения хранятся в браузере и переносятся «Экспортом всех данных»; чтобы они были у всех коллег, передайте файл тому, кто собирает конструктор.</li>
       <li>Вверху сводка: ссылка на основную доверенность (дата и номер), срок не позже срока основной, пункты не в своем разделе или блоке, повторы, неизвестные заголовки, абзац об отмене и подпись. Щелчок по замечанию показывает абзац.</li>
       <li>Скан без текстового слоя не читается: сначала распознайте его, чтобы в PDF появился текстовый слой. Ошибки распознавания (одна-две буквы, латинские буквы вместо русских) показываются как опечатки и не считаются изменением полномочия; числа и номера сравниваются строго.</li>
       <li>Если проект сделан в конструкторе и не пересохранялся в другой программе, конструктор сверяет текст с записанными в файл данными и сообщает, правили ли его после выгрузки.</li>
@@ -1654,7 +1669,7 @@ https://github.com/nodeca/pako/blob/main/LICENSE
 /* ======================================================================
    Константы и утилиты
    ====================================================================== */
-const LS = { state: 'dovk_state_v2', poas: 'dovk_poas_v1', drafts: 'dovk_drafts_v1', blank: 'dovk_blank_v1', blanks: 'dovk_blanks_v1', poaBlank: 'dovk_poablank_v1', ui: 'dovk_ui_v1' };
+const LS = { ckRules: 'dovk_ckrules_v1', state: 'dovk_state_v2', poas: 'dovk_poas_v1', drafts: 'dovk_drafts_v1', blank: 'dovk_blank_v1', blanks: 'dovk_blanks_v1', poaBlank: 'dovk_poablank_v1', ui: 'dovk_ui_v1' };
 const MM = 96 / 25.4;            // px в одном мм
 const PT = 96 / 72;              // px в одном пт
 const TW = 56.6929;              // twips в одном мм
@@ -2796,7 +2811,7 @@ function bindPoas() {
     toast('Доверенность сохранена');
   });
   $('#btnPoaExport').addEventListener('click', () => {
-    const data = { app: 'dovk', version: 3, appVersion: APP_VERSION, exportedAt: new Date().toISOString(), poas: userPoas, drafts, blanks, poaBlank };
+    const data = { app: 'dovk', version: 3, appVersion: APP_VERSION, exportedAt: new Date().toISOString(), poas: userPoas, drafts, blanks, poaBlank, ckRules };
     const blob = new Blob([JSON.stringify(data, null, 1)], { type: 'application/json' });
     const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'конструктор_доверенностей_данные.json'; document.body.appendChild(a); a.click(); a.remove();
   });
@@ -2813,8 +2828,9 @@ function bindPoas() {
       if (data.blank && data.blank.b64) blIn.push({ id: 'bl-' + uid(), name: data.blank.name || 'Бланк из файла', b64: data.blank.b64 });
       let nb = 0; for (const b of blIn) { if (!b || !b.b64) continue; if (blanks.some(x => x.id === b.id || x.b64 === b.b64)) continue; blanks.push({ id: b.id || 'bl-' + uid(), name: b.name || 'Бланк', b64: b.b64 }); nb++; }
       if (data.poaBlank && typeof data.poaBlank === 'object') Object.assign(poaBlank, data.poaBlank);
+      const nr = data.ckRules ? ckMergeRules(data.ckRules) : 0;
       lsSet(LS.blanks, blanks); lsSet(LS.poaBlank, poaBlank); blank.id = null;
-      renderPoaList(); renderPoaSelect(); renderPoaCard(); renderDatalists(); renderBlankInfo(); toast(`Импортировано: доверенностей ${np}, черновиков ${nd}, бланков ${nb}`);
+      renderPoaList(); renderPoaSelect(); renderPoaCard(); renderDatalists(); renderBlankInfo(); toast(`Импортировано: доверенностей ${np}, черновиков ${nd}, бланков ${nb}${nr ? `, решений проверки ${nr}` : ''}`);
     } catch (err) { toast('Не удалось прочитать файл: ' + err.message); }
   });
   bindBlanks();
@@ -2826,8 +2842,9 @@ function bindPoas() {
 /* ПРАВИЛО ДОРАБОТКИ: при каждом изменении конструктора повышается APP_VERSION, в APP_CHANGES добавляется строка,
    а в APP_FEATURES дописывается или правится возможность с номером версии, с которой она есть.
    Вкладки «Возможности ПО» и «Версии» в справке строятся из этих перечней. */
-const APP_VERSION = '2.0';
+const APP_VERSION = '2.1';
 const APP_CHANGES = [
+  ['2.1', '22.10.2026', 'проверка проекта точнее: пункт, перечисляющий частные случаи пункта основной доверенности своими словами, получает статус «конкретизация» вместо «нет в основной»; слова «выше», «ниже» не считаются добавлением; из почти одинаковых пунктов разных блоков выбирается ближайший по тексту. Конструктор запоминает решения проверяющего: «охватывается пунктом», ручное сопоставление, слова, не меняющие смысл; решения сохраняются в файл и переносятся на другой компьютер'],
   ['2.0', '22.10.2026', 'проверка готового проекта доверенности, сделанного коллегой: DOCX (из конструктора или из СЭД), PDF с текстовым слоем, текст; каждый абзац сопоставляется с основной доверенностью (совпадает, сужен, изменен с добавлениями, нет в основной); щелчок по абзацу или выделение фрагмента подсвечивает исходный пункт основной доверенности, и наоборот; проверяются ссылка на основную доверенность, срок, разделы и повторы; найденные пункты переносятся в конструктор'],
   ['1.9', '22.10.2026', 'несколько бланков Word: у каждой основной доверенности (доверителя) свой бланк, выбор запоминается; чистый лист A4 с заголовком «ДОВЕРЕННОСТЬ»; из интерфейса и справки убраны названия конкретной организации и ФИО, конструктор подходит для доверенностей разных организаций'],
   ['1.8', '22.10.2026', 'пустая карточка представителя не попадает в проект, проверка подсказывает удалить ее; подсказки в полях стали явными образцами («например, Иванов Иван Иванович»); заметная кнопка «Удалить представителя»'],
@@ -2891,6 +2908,9 @@ const APP_FEATURES = [
     ['Проект из конструктора: видно, правили ли его после выгрузки; открывается в конструкторе для доработки. Проект из другой программы: найденные пункты переносятся в конструктор с формулировками проекта', '2.0'],
     ['Спорный абзац можно вручную сопоставить с другим пунктом основной доверенности; фильтры «Только требующие внимания» и «Только переданные»', '2.0'],
     ['Модуль чтения PDF (pdf.js) встроен в файл и работает без интернета', '2.0'],
+    ['Конкретизация: пункт, перечисляющий частные случаи пункта основной доверенности своими словами (например, отдельные виды приказов), отмечается для проверки, а не как отсутствующий в основной', '2.1'],
+    ['Слова «выше», «ниже» не считаются добавлением; из почти одинаковых пунктов разных блоков выбирается тот, от которого проект отличается меньше', '2.1'],
+    ['Запомненные решения проверяющего: «охватывается пунктом», ручное сопоставление и слова, не меняющие объем полномочия, применяются к дословно таким же абзацам в следующих проверках; список решений с удалением, сохранение в файл и загрузка, перенос вместе с экспортом всех данных', '2.1'],
   ]],
   ['Проверки', [
     ['Срок не позже срока основной доверенности (п. 4 ст. 187 ГК РФ)', '1.0'],
@@ -3497,6 +3517,7 @@ async function ckReadPdf(buf) {
       if (l.x0 - g.left > Math.max(8, l.h * 0.6)) brk = true;            // абзацный отступ, центрированная строка
       else if (prevShort && prevEnd) brk = true;                            // короткая последняя строка абзаца
       else if (/^[-–—•·]\s/.test(l.text)) brk = true;                       // строка с маркером
+      else if (/[;:]$/.test(prev.text) && /^в\s+рамках\s+исполнения/i.test(l.text)) brk = true;   // заголовок блока после пункта
       else if (l.page !== prev.page && prevEnd && l.x0 - g.left > 3) brk = true;
     }
     if (brk) { if (cur) paras.push(cur); cur = l.text; }
@@ -3610,17 +3631,23 @@ function ckTokens(s) {
     return out;
   });
 }
+/* слова, которые не меняют объем полномочия: «указанных выше договоров» = «указанных договоров» */
+const CK_MINOR = /^(выше|ниже|вышеуказанн\S*|нижеуказанн\S*)$/i;
+let ckMinorSet = new Set();   // слова, которые проверяющий отметил как не меняющие смысл (для текущей основной доверенности)
+const ckIsMinor = w => CK_MINOR.test(w) || ckMinorSet.has(normTok(w));
 function ckDiff(orig, text) {
   const ops = diffWords(orig, text, ckTokens);
-  let ins = 0, del = 0, typos = 0; const insToks = [];
+  let ins = 0, del = 0, typos = 0, minor = 0; const insToks = [];
   for (let k = 0; k < ops.length; k++) {
     const o = ops[k], nx = ops[k + 1];
     if (o.op !== 'eq' && nx && nx.op !== 'eq' && nx.op !== o.op) {
       const A = o.toks.filter(isWord), B = nx.toks.filter(isWord);
       if (A.length && A.length === B.length && A.every((t, i) => ckTypo(t, B[i]))) { typos += A.length; o.typo = nx.typo = true; k++; continue; }
     }
-    if (o.op === 'del') del += o.toks.filter(isWord).length;
-    if (o.op === 'ins') { const w = o.toks.filter(isWord); ins += w.length; insToks.push(...w.map(t => t.t)); }
+    const words = o.toks.filter(isWord), major = words.filter(t => !ckIsMinor(t.t));
+    if (o.op !== 'eq' && words.length && !major.length) { o.minor = true; minor += words.length; continue; }
+    if (o.op === 'del') del += major.length;
+    if (o.op === 'ins') { ins += major.length; insToks.push(...major.map(t => t.t)); }
   }
   const notes = [];
   const nums = insToks.filter(t => /\d/.test(t));
@@ -3628,14 +3655,14 @@ function ckDiff(orig, text) {
   const wide = [...new Set(insToks.filter(t => WIDEN_WORDS.test(t)).map(t => t.toLowerCase()))];
   if (wide.length) notes.push('добавлены слова, которые часто расширяют полномочие: ' + wide.join(', '));
   if (ins && !del) notes.push('текст только дополнен, ничего не исключено: убедитесь, что это уточнение, а не новое полномочие');
-  return { ops, ins, del, typos, insToks, notes };
+  return { ops, ins, del, typos, minor, insToks, notes };
 }
 function ckDiffHtml(ops) {
   return ops.map((o, k) => {
     const lead = k > 0 && (o.toks[0].sp || (o.op !== 'eq' && ops[k - 1].op !== 'eq')) ? ' ' : '';
     const txt = esc(toksText(o.toks));
     if (o.op === 'eq') return lead + txt;
-    const cls = (o.op === 'del' ? 'df-del' : 'df-ins') + (o.typo ? ' df-typo' : '');
+    const cls = (o.op === 'del' ? 'df-del' : 'df-ins') + (o.typo || o.minor ? ' df-typo' : '');
     return lead + (o.op === 'del' ? `<del class="${cls}">${txt}</del>` : `<ins class="${cls}">${txt}</ins>`);
   }).join('');
 }
@@ -3644,6 +3671,7 @@ function ckDiffSummary(d) {
   if (d.del) p.push(`исключено слов: ${d.del}`);
   if (d.ins) p.push(`добавлено слов: ${d.ins}`);
   if (d.typos) p.push(`похоже на опечатки: ${d.typos}`);
+  if (d.minor) p.push(`слов, не меняющих смысл: ${d.minor}`);
   return p.join(', ') || 'отличия только в знаках препинания';
 }
 const RU_MONTHS = MONTHS_GEN.map(m => m.slice(0, 3));
@@ -3663,17 +3691,43 @@ function ckIsSignature(t, poa) {
 }
 const headNorm = h => normTight(cleanEnd(h).replace(/:\s*$/, ''));
 
+/* ---------- запомненные решения проверяющего ----------
+   items: {poaId: {ключ абзаца: {id, ok, text, at}}}: абзац сопоставлен с пунктом (id), ok = признан охватываемым пунктом;
+   minor: {poaId: [слова]}: слова, которые не меняют объем полномочия. Ключ: текст абзаца без пробелов и знаков,
+   поэтому решение применяется только к дословно такому же абзацу. Встроенные решения лежат в poas.json (poa.ckRules) */
+let ckRules = Object.assign({ items: {}, minor: {} }, lsGet(LS.ckRules, {}));
+function ckSaveRules() { lsSet(LS.ckRules, ckRules); }
+function ckRulesFor(poa) {
+  const b = (poa && poa.ckRules) || {};
+  const items = {};
+  for (const k in (b.items || {})) items[k] = Object.assign({ builtin: true }, b.items[k]);
+  Object.assign(items, ckRules.items[poa.id] || {});
+  return { items, minor: new Set([...(b.minor || []), ...(ckRules.minor[poa.id] || [])].map(w => normTok(w))) };
+}
+function ckRuleCount(poa) { const r = ckRulesFor(poa); return Object.keys(r.items).length + r.minor.size; }
+function ckKey(clean) { return normTight(clean); }
+
 /* разбор проекта по основной доверенности */
 function ckAnalyze(paras, poa, data, ov) {
   const idx = ckIndex(poa);
+  const rules = ckRulesFor(poa); ckMinorSet = rules.minor; ov = rules.items;
   const dataOk = !!(data && data.app === 'dovk' && data.poaId === poa.id);
   const ids = dataOk ? new Set(Object.keys(data.sel || {}).filter(id => data.sel[id] && idx.byId.has(id))) : null;
   const general = poa.blocks.find(b => !b.title) || null;
   const ctx = { block: general, section: null, ids };
   const units = []; let phase = 'start';
   const add = u => { u.n = units.length + 1; u.flags = u.flags || []; units.push(u); return u; };
-  // абзацы, склеенные при чтении PDF: фраза о сроке, об отмене и о передоверии отделяются
-  const paras2 = paras.flatMap(p => String(p || '').split(/(?<=[.»])\s+(?=(?:Настоящая\s+)?[Дд]оверенность\s+(?:выдана|действ)|Сведения\s+об\s+отмене|Директор\s)/));
+  // абзацы, склеенные при чтении PDF: фраза о сроке, об отмене и о передоверии отделяются,
+  // заголовок блока или раздела, приклеенный к пункту через «;», тоже
+  const heads = [...poa.blocks.filter(b => b.title).map(b => normTight(b.title)), ...poa.blocks.flatMap(b => b.sections.map(s => normTight(s.heading)))].filter(h => h.length >= 6);
+  const headStart = s => { const x = normTight(ckClean(s)); return heads.some(h => x.startsWith(h.slice(0, Math.min(18, h.length)))); };
+  const splitHead = p => {
+    if (!/:\s*$/.test(p)) return [p];
+    const i = p.lastIndexOf(';'); if (i < 0) return [p];
+    const tail = p.slice(i + 1).trim();
+    return tail && headStart(tail) ? [p.slice(0, i + 1), tail] : [p];
+  };
+  const paras2 = paras.flatMap(p => String(p || '').split(/(?<=[.»])\s+(?=(?:Настоящая\s+)?[Дд]оверенность\s+(?:выдана|действ)|Сведения\s+об\s+отмене|Директор\s)/)).flatMap(splitHead);
   for (const raw of paras2) {
     const text = String(raw || '').replace(/\s+/g, ' ').trim();
     if (!text || /^[-–—]?\s*\d{1,3}\s*[-–—]?$/.test(text)) continue;
@@ -3682,7 +3736,7 @@ function ckAnalyze(paras, poa, data, ov) {
     // заголовок блока («в рамках исполнения ...:») или раздела («- подписывать:»)
     if (/:\s*$/.test(tl) && t.length < 700 && phase !== 'start') {
       let bestB = null, bb = 0;
-      for (const b of poa.blocks) if (b.title) { const s = ckSim(t, b.title); const v = Math.min(s.inA, s.inB); if (v > bb) { bb = v; bestB = b; } }
+      for (const b of poa.blocks) if (b.title) { const s = ckSim(t, b.title); const tb = normTight(b.title); const v = normTight(t).startsWith(tb.slice(0, Math.min(18, tb.length))) ? Math.min(s.inA, s.inB) : 0; if (v > bb) { bb = v; bestB = b; } }
       if (bestB && bb >= 0.75) { ctx.block = bestB; ctx.section = null; phase = 'items'; add({ kind: 'block', text, b: bestB, exact: headNorm(t) === headNorm(bestB.title) }); continue; }
       if (t.length < 220 && phase !== 'reps' || /^[-–—•]\s/.test(text)) {
         const h = headNorm(t);
@@ -3731,18 +3785,78 @@ function ckAnalyze(paras, poa, data, ov) {
   for (const u of units) if (u.kind === 'item' && u.m && u.st === 'weak') (weakBy[u.m.x.it.id] = weakBy[u.m.x.it.id] || []).push(u);
   return { poa, idx, units, byItem, weakBy, data: data || null, dataOk };
 }
+/* конкретизация: проект перечисляет частные случаи пункта своими словами
+   («утверждать приказы о командировках, об отпусках» при пункте «утверждать ... приказы и распоряжения Филиала»).
+   Головные слова перечня в проекте (первое значимое слово каждого элемента, у первого элемента еще и следующее:
+   действие и его предмет) должны быть в пункте, а первое из них должно открывать один из элементов пункта */
+const CK_PREP = /^(о|об|обо|в|во|на|по|с|со|к|ко|из|от|до|для|при|без|над|под|за|и|или|либо|а|также|том|числе|т|ч|включая|кроме|за|исключением)$/i;
+function ckSplitTop(text) {
+  const out = []; let depth = 0, cur = '';
+  for (const ch of String(text)) {
+    if (ch === '(' || ch === '«') depth++;
+    if ((ch === ')' || ch === '»') && depth > 0) depth--;
+    if ((ch === ',' || ch === ';') && depth === 0) { out.push(cur); cur = ''; } else cur += ch;
+  }
+  out.push(cur);
+  return out.map(s => s.trim()).filter(Boolean);
+}
+function ckHeads(text) {
+  const heads = [];
+  ckSplitTop(text).forEach((el, i) => {
+    const w = rawWords(el).map(x => x.toLowerCase().replace(/ё/g, 'е'));
+    if (!w.length || CK_PREP.test(w[0])) return;            // «о направлении на обучение» продолжает предыдущий элемент
+    let k = 0; while (k < w.length && (STOP.has(w[k]) || w[k].length < 2)) k++;
+    if (k >= w.length) return;
+    heads.push(stemWord(w[k]));
+    if (i === 0 && k + 1 < w.length && !CK_PREP.test(w[k + 1]) && !STOP.has(w[k + 1])) heads.push(stemWord(w[k + 1]));
+  });
+  return heads;
+}
+function ckRefine(clean, idx, ctx) {
+  const dh = ckHeads(clean); if (!dh.length) return null;
+  let best = null;
+  for (const x of idx.items) {
+    if (!x.heads) x.heads = new Set(ckHeads(x.text));
+    if (!x.heads.has(dh[0]) || !dh.every(h => x.S.has(h))) continue;
+    const c = ckRank(clean, { items: [x], w: idx.w }, ctx)[0];
+    if (c && (!best || c.score > best.score)) best = c;
+  }
+  if (best) best.heads = dh;
+  return best;
+}
 function ckItemUnit(clean, shown, idx, ctx, ov) {
   const cands = ckRank(clean, idx, ctx);
-  const key = normText(clean);
-  const forcedId = ov && ov[key];
+  const key = ckKey(clean);
+  const rule = ov && ov[key] && idx.byId.has(ov[key].id) ? ov[key] : null;
+  const forcedId = rule ? rule.id : null;
   let top = cands[0];
   if (forcedId) top = cands.find(c => c.x.it.id === forcedId) || top;
-  const u = { kind: 'item', text: shown, clean, key, cands: cands.filter(c => c.rank >= 0.2).slice(0, 4), m: null, st: 'none', flags: [], forced: !!forcedId };
+  const u = { kind: 'item', text: shown, clean, key, cands: cands.filter(c => c.rank >= 0.2).slice(0, 4), m: null, st: 'none', flags: [], forced: !!forcedId, rule };
+  if (!forcedId && (!top || top.rank < 0.55)) {
+    const ref = ckRefine(clean, idx, ctx);
+    if (ref && (!top || ref.score >= top.score - 0.15)) {
+      u.m = ref; u.st = 'refine'; u.d = ckDiff(ref.x.text, clean);
+      if (ctx.section ? ref.x.s !== ctx.section : (ctx.block && ref.x.b !== ctx.block)) u.flags.push({ k: 'place', x: ref.x });
+      return u;
+    }
+  }
   if (!top || (top.rank < 0.35 && !forcedId)) return u;
-  u.m = top;
   u.d = ckDiff(top.x.text, clean);
+  if (!forcedId && top.rank >= 0.55 && (u.d.ins || u.d.del)) {
+    // почти одинаковые пункты (например, «указанных договоров» и «указанных выше договоров» в разных блоках):
+    // при равной оценке выбирается пункт, от которого проект отличается меньше
+    const cost = d => d.ins * 10 + d.del;
+    for (const c of cands) {
+      if (c === top || top.score - c.score >= 0.02) continue;
+      const d = ckDiff(c.x.text, clean);
+      if (cost(d) < cost(u.d)) { top = c; u.d = d; }
+    }
+  }
+  u.m = top;
   if (top.rank < 0.55 && !forcedId) u.st = 'weak';
   else u.st = u.d.ins ? 'changed' : u.d.del ? 'narrow' : u.d.typos ? 'typo' : 'same';
+  if (forcedId && top.rank < 0.55 && !rule.ok) u.st = 'weak';
+  if (rule && rule.ok && u.st !== 'same' && u.st !== 'typo') u.st = 'accepted';
   if (!forcedId && u.st !== 'weak') {
     const second = cands.find(c => c !== top && c.x.it.id !== top.x.it.id);
     if (second && top.score - second.score < 0.015 && second.rank >= 0.55) u.flags.push({ k: 'ambig', x: second.x });
@@ -3757,6 +3871,8 @@ const CK_ST = {
   typo: ['совпадает, есть опечатки', 'ok', 'отличия в 1-2 буквах отдельных слов: похоже на опечатки или ошибки распознавания'],
   narrow: ['сужен', 'info', 'из пункта основной доверенности исключены слова, новых слов нет'],
   changed: ['изменен, есть добавления', 'warn', 'в пункте есть слова, которых нет в основной доверенности: проверьте, что полномочие не расширено'],
+  accepted: ['принято проверяющим', 'ok', 'проверяющий решил, что абзац охватывается пунктом основной доверенности; решение запомнено и применяется к дословно такому же абзацу'],
+  refine: ['конкретизация', 'warn', 'пункт сформулирован своими словами: перечислены частные случаи того, что есть в пункте основной доверенности (совпавшие слова подсвечены); проверьте, что все перечисленное охватывается пунктом'],
   weak: ['частичное сходство', 'warn', 'пункт похож на пункт основной доверенности лишь частично: проверьте смысл'],
   none: ['нет в основной', 'err', 'подходящего пункта в основной доверенности не найдено: такое полномочие передать нельзя'],
 };
@@ -3796,6 +3912,8 @@ function ckChecks(R) {
     if (u.st === 'none') out.push({ k: 'err', t: `Абз. ${u.n}: полномочия нет в основной доверенности.`, u });
     else if (u.st === 'changed') out.push({ k: 'warn', t: `Абз. ${u.n}: добавлены слова: ${[...new Set(u.d.insToks)].slice(0, 12).join(', ')}${u.d.insToks.length > 12 ? '...' : ''}.`, u });
     else if (u.st === 'weak') out.push({ k: 'warn', t: `Абз. ${u.n}: только частичное сходство с пунктом основной доверенности.`, u });
+    else if (u.st === 'accepted') out.push({ k: 'info', t: `Абз. ${u.n}: принято проверяющим (запомненное решение${u.rule && u.rule.builtin ? ', встроено в конструктор' : ''}).`, u });
+    else if (u.st === 'refine') out.push({ k: 'warn', t: `Абз. ${u.n}: конкретизация пункта «${u.m.x.text.length > 90 ? u.m.x.text.slice(0, 90) + '...' : u.m.x.text}»: проверьте, что все перечисленное им охватывается.`, u });
     for (const f of u.flags) out.push({ k: f.k === 'ambig' ? 'info' : 'warn', t: `Абз. ${u.n}: ${ckFlagText(f)}.`, u });
   }
   for (const u of U) if (u.kind === 'heading' || u.kind === 'block') for (const f of u.flags) out.push({ k: 'warn', t: `Абз. ${u.n}: ${ckFlagText(f)}.`, u });
@@ -3842,12 +3960,13 @@ function ckChecks(R) {
 }
 
 /* ---------- состояние и отрисовка окна проверки ---------- */
-const ck = { paras: null, data: null, src: '', poaId: null, ov: {}, R: null, sel: null, onlyIssues: false, onlyUsed: false, open: {} };
+const ck = { paras: null, data: null, src: '', poaId: null, R: null, sel: null, onlyIssues: false, onlyUsed: false, open: {} };
 function ckRun() {
   if (!ck.paras) return;
   const poa = getPoa(ck.poaId) || curPoa(); if (!poa) { toast('Нет основной доверенности'); return; }
   ck.poaId = poa.id;
-  ck.R = ckAnalyze(ck.paras, poa, ck.data, ck.ov[poa.id] || {});
+  ck.R = ckAnalyze(ck.paras, poa, ck.data);
+  ckRenderRulesBtn();
   ck.C = ckChecks(ck.R);
   ck.sel = null;
   ck.open = {};
@@ -3857,7 +3976,7 @@ function ckRun() {
 }
 function ckRenderSummary() {
   const C = ck.C, R = ck.R;
-  const order = ['same', 'typo', 'narrow', 'changed', 'weak', 'none'];
+  const order = ['same', 'typo', 'narrow', 'accepted', 'refine', 'changed', 'weak', 'none'];
   const badges = order.filter(k => C.cnt[k]).map(k => `<span class="badge cs-${CK_ST[k][1]}" title="${esc(CK_ST[k][2])}">${CK_ST[k][0]}: ${C.cnt[k]}</span>`).join('');
   const nErr = C.list.filter(c => c.k === 'err').length, nWarn = C.list.filter(c => c.k === 'warn').length;
   const verdict = nErr ? `<b class="ck-v err">Есть ошибки: ${nErr}</b>` : nWarn ? `<b class="ck-v warn">Ошибок нет, замечаний: ${nWarn}</b>` : '<b class="ck-v ok">Ошибок и замечаний нет</b>';
@@ -3882,7 +4001,7 @@ function ckRenderDoc() {
   $('#ckDoc').innerHTML = list.map(u => {
     const cls = ['ck-u', 'k-' + u.kind, u.kind === 'item' ? 'st-' + CK_ST[u.st][1] : '', ckIssue(u) ? 'issue' : ''].filter(Boolean).join(' ');
     const flags = u.flags.map(f => `<span class="ck-flag">${esc(ckFlagText(f))}</span>`).join('');
-    return `<div class="${cls}" data-u="${u.n}"><span class="ck-n">${u.n}</span><div class="ck-ub"><div class="ck-ut">${esc(u.text)}</div><div class="ck-um">${ckUnitLabel(u)}${u.forced ? '<span class="ck-kind">сопоставлено вручную</span>' : ''}${flags}</div></div></div>`;
+    return `<div class="${cls}" data-u="${u.n}"><span class="ck-n">${u.n}</span><div class="ck-ub"><div class="ck-ut">${esc(u.text)}</div><div class="ck-um">${ckUnitLabel(u)}${u.rule && !u.rule.ok ? '<span class="ck-kind">сопоставлено вручную</span>' : ''}${flags}</div></div></div>`;
   }).join('') || '<div class="empty-note">Замечаний нет</div>';
   ckMarkActive();
 }
@@ -3929,9 +4048,13 @@ function ckMarkActive() {
     if (el) {
       el.classList.add('active');
       const x = el.querySelector('.ck-it-x');
-      if (S.diffU) {
+      if (S.diffU && S.diffU.st === 'refine' && S.diffU.m && S.diffU.m.x.it.id === S.item) {
+        const u = S.diffU;
+        el.querySelector('.ck-it-t').innerHTML = markText(cleanEnd(u.m.x.text), stems(u.clean), 'mark');
+        x.innerHTML = `<div class="df"><div class="df-head"><b>Абз. ${u.n} конкретизирует этот пункт</b> <span>слова проекта, которые есть в пункте, подсвечены выше</span></div><div class="df-text">${markText(cleanEnd(u.clean), u.m.x.S, 'mark')}</div><ul class="df-notes"><li>проверьте, что каждый перечисленный в проекте случай охватывается пунктом основной доверенности</li></ul></div>`;
+      } else if (S.diffU) {
         const u = S.diffU, d = u.m && u.m.x.it.id === S.item ? u.d : ckDiff(ck.R.idx.byId.get(S.item).text, u.clean);
-        x.innerHTML = `<div class="df"><div class="df-head"><b>Абз. ${u.n} проекта против пункта основной</b> <span>${d.ins || d.del || d.typos ? esc(ckDiffSummary(d)) : 'совпадает дословно'}</span></div>${d.ins || d.del || d.typos ? `<div class="df-text">${ckDiffHtml(d.ops)}</div>` : ''}${d.notes.length ? `<ul class="df-notes">${d.notes.map(n => `<li>${esc(n)}</li>`).join('')}</ul>` : ''}</div>`;
+        x.innerHTML = `<div class="df"><div class="df-head"><b>Абз. ${u.n} проекта против пункта основной</b> <span>${d.ins || d.del || d.typos || d.minor ? esc(ckDiffSummary(d)) : 'совпадает дословно'}</span></div>${d.ins || d.del || d.typos || d.minor ? `<div class="df-text">${ckDiffHtml(d.ops)}</div>` : ''}${d.notes.length ? `<ul class="df-notes">${d.notes.map(n => `<li>${esc(n)}</li>`).join('')}</ul>` : ''}</div>`;
       } else if (S.frag) {
         el.querySelector('.ck-it-t').innerHTML = markText(cleanEnd(ck.R.idx.byId.get(S.item).text), stems(S.frag), 'mark');
       }
@@ -4001,6 +4124,14 @@ function ckCandHtml(c, forUnit, frag) {
     ${forUnit ? `<button type="button" class="btn small" data-assign="${esc(c.x.it.id)}" title="Считать, что этот абзац проекта взят из этого пункта">Сопоставить</button>` : ''}
     <div class="ck-cand-t">${esc(c.x.text.length > 220 ? c.x.text.slice(0, 220) + '...' : c.x.text)}</div></li>`;
 }
+/* кнопки решений проверяющего для абзаца-полномочия */
+function ckDecideHtml(u) {
+  if (!u.m || u.st === 'same' || u.st === 'typo' || u.st === 'narrow' || u.st === 'accepted') return '';
+  const words = u.st === 'changed' && u.d ? [...new Set(u.d.insToks.map(w => w.toLowerCase()))].filter(w => !/\d/.test(w) && !WIDEN_WORDS.test(w)).slice(0, 8) : [];   // числа и «любые», «иные» так не отметить
+  return `<div class="ck-decide"><button type="button" class="btn small primary" data-accept="1" title="Запомнить: этот абзац (дословно) охватывается пунктом основной доверенности">Охватывается пунктом, запомнить</button>`
+    + (words.length ? ` <span class="muted">или отметьте добавленное слово, которое не меняет объем полномочия:</span> ${words.map(w => `<button type="button" class="btn small" data-minor="${esc(w)}" title="Запомнить: слово «${esc(w)}» не меняет объем полномочия в пунктах этой основной доверенности">«${esc(w)}» не меняет смысл</button>`).join(' ')}` : '')
+    + '</div>';
+}
 function ckRenderInfo() {
   const box = $('#ckSelInfo'); const S = ck.sel;
   if (!S) { box.innerHTML = '<span class="muted">Щелкните абзац проекта или выделите в нем фрагмент мышью: здесь подсветится исходный пункт основной доверенности. Щелчок по пункту справа покажет, где он в проекте.</span>'; return; }
@@ -4020,9 +4151,11 @@ function ckRenderInfo() {
     const weakSt = u.st === 'none' || u.st === 'weak';
     const others = u.cands.filter(c => (!u.m || c.x.it.id !== u.m.x.it.id) && (weakSt || c.rank >= 0.5)).slice(0, 3);
     box.innerHTML = `<div><b>Абз. ${u.n}:</b> <span class="badge cs-${st[1]}">${st[0]}</span> <span class="muted">${esc(st[2])}</span></div>`
-      + (u.m ? `<div class="muted">Пункт основной доверенности: ${esc(ckWhere(u.m.x))}${u.forced ? ' (сопоставлено вручную, <button type="button" class="ck-link" data-unassign="1">отменить</button>)' : ''}</div>` : '')
+      + (u.m ? `<div class="muted">Пункт основной доверенности: ${esc(ckWhere(u.m.x))}</div>` : '')
+      + (u.rule ? `<div class="ck-rule">Запомненное решение${u.rule.builtin ? ' (встроено в конструктор)' : ''}: ${u.rule.ok ? 'абзац охватывается пунктом' : 'абзац сопоставлен с пунктом вручную'}${u.rule.builtin ? '' : ' <button type="button" class="ck-link" data-unassign="1">отменить решение</button>'}</div>` : '')
       + (u.flags.length ? `<div class="ck-none">${u.flags.map(f => esc(ckFlagText(f))).join('<br>')}</div>` : '')
-      + (others.length && (u.st === 'none' || u.st === 'weak' || u.flags.some(f => f.k === 'ambig') || u.st === 'changed') ? `<div class="muted" style="margin-top:4px">${u.m ? 'Другие похожие пункты' : 'Ближайшие пункты'}:</div><ul class="ck-cands">${others.map(c => ckCandHtml(c, true)).join('')}</ul>` : '');
+      + ckDecideHtml(u)
+      + (others.length && (u.st === 'none' || u.st === 'weak' || u.flags.some(f => f.k === 'ambig') || u.st === 'changed' || u.st === 'refine') ? `<div class="muted" style="margin-top:4px">${u.m ? 'Другие похожие пункты' : 'Ближайшие пункты'}:</div><ul class="ck-cands">${others.map(c => ckCandHtml(c, true)).join('')}</ul>` : '');
     return;
   }
   if (S.item) {
@@ -4030,15 +4163,52 @@ function ckRenderInfo() {
     box.innerHTML = `<div><b>${esc(ckWhere(x))}</b></div>` + (S.units.length ? `<div class="muted">В проекте: ${S.units.map(n => `<button type="button" class="ck-link" data-gou="${n}">абз. ${n}</button>`).join(', ')}</div>` : '<div class="muted">Этот пункт в проект не передан.</div>');
   }
 }
-function ckAssign(unitKey, itemId) {
-  const poaId = ck.R.poa.id; ck.ov[poaId] = ck.ov[poaId] || {};
-  if (itemId) ck.ov[poaId][unitKey] = itemId; else delete ck.ov[poaId][unitKey];
+function ckRerun() {
   const keepSel = ck.sel && ck.sel.unit ? ck.sel.unit.n : null;
   const scrollDoc = $('#ckDoc').scrollTop, scrollTree = $('#ckTree').scrollTop;
   ckRun();
   $('#ckDoc').scrollTop = scrollDoc; $('#ckTree').scrollTop = scrollTree;
   if (keepSel) ckSelectUnit(keepSel, false);
+  if (!$('#ckRulesBox').hidden) ckRenderRules();
 }
+/* решение по абзацу: itemId = с каким пунктом сопоставлен, ok = охватывается пунктом; null удаляет решение */
+function ckAssign(unitKey, itemId, ok, text) {
+  const poaId = ck.R.poa.id; const m = ckRules.items[poaId] = ckRules.items[poaId] || {};
+  if (itemId) m[unitKey] = { id: itemId, ok: !!ok, text: String(text || '').slice(0, 400), at: Date.now() }; else delete m[unitKey];
+  ckSaveRules(); ckRerun();
+}
+function ckRenderRulesBtn() {
+  const poa = getPoa(ck.poaId) || curPoa(); const n = poa ? ckRuleCount(poa) : 0;
+  $('#btnCkRules').textContent = `Запомненные решения${n ? ` (${n})` : ''}`;
+}
+function ckRenderRules() {
+  const poa = getPoa(ck.poaId) || curPoa(); if (!poa) return;
+  const r = ckRulesFor(poa); const idx = ckIndex(poa);
+  const items = Object.entries(r.items).sort((a, b) => (b[1].at || 0) - (a[1].at || 0));
+  const userMinor = new Set((ckRules.minor[poa.id] || []).map(w => normTok(w)));
+  $('#ckRulesBox').innerHTML = `<div class="ck-rules-head"><b>Запомненные решения по доверенности ${esc(poa.name)}</b>
+      <span class="spacer"></span>
+      <button type="button" class="btn small" id="btnCkRulesExport">Сохранить в файл</button>
+      <label class="btn small" style="display:inline-block">Загрузить из файла<input type="file" id="ckRulesImport" accept=".json" hidden></label></div>
+    <p class="muted">Решение применяется только к дословно такому же абзацу (без учета пробелов и знаков препинания). Чтобы решения были у всех коллег, сохраните их в файл и передайте тому, кто собирает конструктор: их встроят в следующую версию.</p>
+    ${items.length ? `<ul class="ck-rules">${items.map(([k, v]) => { const x = idx.byId.get(v.id); return `<li><div class="t">«${esc((v.text || k).slice(0, 220))}${(v.text || '').length > 220 ? '...' : ''}»</div>
+      <div class="s">${v.ok ? '<span class="badge cs-ok">охватывается пунктом</span>' : '<span class="badge cs-info">сопоставлен вручную</span>'} ${x ? esc(ckWhere(x)) : '<span class="ck-none">пункт не найден</span>'}${v.builtin ? ' <span class="pill">встроено</span>' : ` <button type="button" class="ck-link" data-rule-del="${esc(k)}">удалить</button>`}</div></li>`; }).join('')}</ul>` : '<p class="muted">Решений по абзацам пока нет.</p>'}
+    <div class="ck-minor"><b>Слова, не меняющие объем полномочия:</b> <span class="muted">выше, ниже (всегда)</span>${[...r.minor].map(w => ` <span class="pill">${esc(w)}${userMinor.has(w) ? ` <button type="button" class="ck-link" data-minor-del="${esc(w)}" title="Удалить">×</button>` : ''}</span>`).join('')}</div>`;
+}
+function ckExportRules() {
+  const data = { app: 'dovk', kind: 'ckRules', version: 1, appVersion: APP_VERSION, exportedAt: new Date().toISOString(), ckRules };
+  const blob = new Blob([JSON.stringify(data, null, 1)], { type: 'application/json' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'конструктор_решения_проверки.json'; document.body.appendChild(a); a.click(); a.remove();
+}
+/* слияние решений из файла (своего или общего экспорта данных) */
+function ckMergeRules(src) {
+  if (!src || typeof src !== 'object') return 0;
+  let n = 0;
+  for (const pid in (src.items || {})) { const m = ckRules.items[pid] = ckRules.items[pid] || {}; for (const k in src.items[pid]) { if (!m[k]) n++; m[k] = src.items[pid][k]; } }
+  for (const pid in (src.minor || {})) { const s = new Set(ckRules.minor[pid] || []); for (const w of src.minor[pid]) if (!s.has(w)) { s.add(w); n++; } ckRules.minor[pid] = [...s]; }
+  ckSaveRules(); return n;
+}
+
 /* перенос в конструктор: из данных файла (если они есть) или по найденным пунктам */
 function ckTransfer() {
   const R = ck.R;
@@ -4050,7 +4220,7 @@ function ckTransfer() {
     if (u.kind !== 'item') continue;
     if (!u.m || u.st === 'weak' || u.st === 'none') { skipped++; continue; }
     const id = u.m.x.it.id; sel[id] = true;
-    if (u.st === 'narrow' || u.st === 'changed') edits[id] = cleanEnd(u.clean);
+    if (u.st === 'narrow' || u.st === 'changed' || u.st === 'refine' || (u.st === 'accepted' && (u.d.ins || u.d.del || u.d.minor))) edits[id] = cleanEnd(u.clean);
   }
   if (!Object.keys(sel).length) { toast('Нет найденных пунктов для переноса'); return; }
   if ((selectedCount() || state.reps.some(r => r.nom)) && !confirm('Заменить текущую форму пунктами из проверенного проекта? Представителей нужно будет указать заново.')) return;
@@ -4103,7 +4273,7 @@ async function ckLoadFile(f) {
 }
 function bindCheck() {
   $('#btnCheck').addEventListener('click', () => {
-    ckFillPoaSelect();
+    ckFillPoaSelect(); ckRenderRulesBtn();
     if (!ck.R) { $('#ckEmpty').hidden = false; $('#ckMain').hidden = true; $('#ckSummary').hidden = true; }
     $('#dlgCheck').showModal();
   });
@@ -4119,7 +4289,21 @@ function bindCheck() {
     ck.paras = paras; ck.data = null; ck.src = 'вставленный текст'; ck.poaId = ckGuessPoa(paras, null);
     $('#ckFileName').textContent = ''; $('#ckPasteBox').hidden = true; ckFillPoaSelect(); ckRun();
   });
-  $('#ckPoa').addEventListener('change', e => { ck.poaId = e.target.value; if (ck.paras) ckRun(); });
+  $('#ckPoa').addEventListener('change', e => { ck.poaId = e.target.value; ckRenderRulesBtn(); if (ck.paras) ckRun(); if (!$('#ckRulesBox').hidden) ckRenderRules(); });
+  $('#btnCkRules').addEventListener('click', () => { const box = $('#ckRulesBox'); box.hidden = !box.hidden; if (!box.hidden) ckRenderRules(); });
+  $('#ckRulesBox').addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    const poa = getPoa(ck.poaId) || curPoa(); if (!poa) return;
+    if (b.id === 'btnCkRulesExport') { ckExportRules(); return; }
+    if (b.dataset.ruleDel) { if (!confirm('Удалить запомненное решение?')) return; delete (ckRules.items[poa.id] || {})[b.dataset.ruleDel]; ckSaveRules(); if (ck.paras) ckRerun(); else ckRenderRules(); ckRenderRulesBtn(); return; }
+    if (b.dataset.minorDel) { ckRules.minor[poa.id] = (ckRules.minor[poa.id] || []).filter(w => normTok(w) !== b.dataset.minorDel); ckSaveRules(); if (ck.paras) ckRerun(); else ckRenderRules(); ckRenderRulesBtn(); }
+  });
+  $('#ckRulesBox').addEventListener('change', async e => {
+    if (e.target.id !== 'ckRulesImport') return;
+    const f = e.target.files[0]; e.target.value = ''; if (!f) return;
+    try { const d = JSON.parse(await f.text()); const n = ckMergeRules(d.ckRules || d); toast(`Загружено решений: ${n}`); if (ck.paras) ckRerun(); else ckRenderRules(); ckRenderRulesBtn(); }
+    catch (err) { toast('Не удалось прочитать файл: ' + err.message); }
+  });
   $('#btnCkOnlyIssues').addEventListener('click', () => { ck.onlyIssues = !ck.onlyIssues; ckRenderDoc(); });
   $('#btnCkOnlyUsed').addEventListener('click', () => { ck.onlyUsed = !ck.onlyUsed; ckRenderTree(); });
   $('#ckSummary').addEventListener('click', e => {
@@ -4161,8 +4345,13 @@ function bindCheck() {
       ckMarkActive(); ckScrollTo($(`#ckTree .ck-it[data-ckit="${CSS.escape(b.dataset.goit)}"]`), $('#ckTree'));
       return;
     }
-    if (b.dataset.assign && ck.sel && ck.sel.unit) { ckAssign(ck.sel.unit.key, b.dataset.assign); toast('Абзац сопоставлен с выбранным пунктом'); return; }
-    if (b.dataset.unassign && ck.sel && ck.sel.unit) { ckAssign(ck.sel.unit.key, null); toast('Ручное сопоставление отменено'); }
+    if (b.dataset.assign && ck.sel && ck.sel.unit) { ckAssign(ck.sel.unit.key, b.dataset.assign, false, ck.sel.unit.clean); toast('Абзац сопоставлен с выбранным пунктом, решение запомнено'); return; }
+    if (b.dataset.accept && ck.sel && ck.sel.unit && ck.sel.unit.m) { ckAssign(ck.sel.unit.key, ck.sel.unit.m.x.it.id, true, ck.sel.unit.clean); toast('Запомнено: абзац охватывается пунктом основной доверенности'); return; }
+    if (b.dataset.minor) {
+      const pid = ck.R.poa.id; const s = new Set(ckRules.minor[pid] || []); s.add(b.dataset.minor); ckRules.minor[pid] = [...s]; ckSaveRules();
+      toast(`Запомнено: слово «${b.dataset.minor}» не меняет объем полномочия`); ckRerun(); return;
+    }
+    if (b.dataset.unassign && ck.sel && ck.sel.unit) { ckAssign(ck.sel.unit.key, null); toast('Решение отменено'); }
   });
 }
 
