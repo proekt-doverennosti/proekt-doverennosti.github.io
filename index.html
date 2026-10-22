@@ -471,6 +471,56 @@ dialog.full.drag { outline: 3px dashed var(--accent); outline-offset: -6px; }
 .ck-minor { margin-top: 6px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
 .ck-minor .pill .ck-link { text-decoration: none; margin-left: 2px; }
 
+/* ---------- сборка основной доверенности ---------- */
+.mk-main { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(240px, 0.75fr) minmax(0, 1.25fr) minmax(0, 1.2fr); }
+.mk-pad { padding: 10px 14px 30px; }
+.mk-box { display: flex; flex-direction: column; gap: 6px; margin: 8px 0; }
+.mk-box input, .mk-box textarea, .mk-box select, .mk-search { border: 1px solid var(--line); border-radius: var(--radius); padding: 5px 8px; }
+.mk-box textarea { min-height: 120px; resize: vertical; }
+.mk-search { width: 170px; }
+.mk-sources { margin-top: 8px; }
+.mk-sources li { flex-wrap: wrap; }
+.mk-sn { display: inline-block; min-width: 18px; height: 18px; line-height: 18px; text-align: center; border-radius: 9px; background: var(--accent-soft); color: var(--accent); font-size: 11px; font-weight: 600; margin-right: 3px; padding: 0 4px; cursor: help; }
+.mk-b { margin-bottom: 14px; }
+.mk-bh { font-weight: 600; font-size: 13px; padding: 4px 0; border-bottom: 1px solid var(--line-soft); margin-bottom: 4px; }
+.mk-sh { font-size: 12.5px; font-weight: 600; color: var(--muted); margin: 8px 0 4px; }
+.mk-c { border: 1px solid var(--line-soft); border-radius: 6px; margin-bottom: 6px; background: var(--paper); }
+.mk-c.multi { border-color: var(--warn); }
+.mk-ch { font-size: 12px; color: var(--warn); padding: 4px 9px 0; font-weight: 600; }
+.mk-v { padding: 6px 9px; border-top: 1px dashed var(--line-soft); font-size: 13px; line-height: 1.42; }
+.mk-v:first-of-type, .mk-ch + .mk-v { border-top: 0; }
+.mk-v.in { background: var(--ok-soft); }
+.mk-vm { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; margin-top: 3px; }
+.mk-fields { background: var(--pane); border: 1px solid var(--line-soft); border-radius: 6px; padding: 6px 10px; margin-bottom: 10px; }
+.mk-fields summary { cursor: pointer; font-weight: 600; font-size: 13px; }
+.mk-fields .field input, .mk-fields .field textarea, .mk-fields select { width: 100%; border: 1px solid var(--line); border-radius: var(--radius); padding: 5px 8px; }
+.mk-fields select { width: auto; max-width: 100%; }
+.mk-db { border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px; margin-bottom: 10px; }
+.mk-dbh, .mk-dsh, .mk-di { display: flex; gap: 6px; align-items: flex-start; }
+.mk-tools { flex: none; display: inline-flex; gap: 0; align-items: center; white-space: nowrap; }
+.mk-in { flex: 1; min-width: 0; border: 1px solid transparent; border-radius: 4px; padding: 3px 6px; background: transparent; font-size: 13px; line-height: 1.4; resize: none; overflow: hidden; }
+.mk-in:hover { border-color: var(--line); }
+.mk-in:focus { border-color: var(--accent); background: var(--paper); outline: none; }
+.mk-dbh .mk-in { font-weight: 600; }
+.mk-ds { margin: 4px 0 4px 10px; padding: 4px 6px; border-left: 3px solid var(--line-soft); border-radius: 4px; }
+.mk-ds.active { border-left-color: var(--accent); background: var(--accent-soft); }
+.mk-dsh .mk-in { font-weight: 600; color: var(--muted); }
+.mk-di { margin-left: 10px; }
+.mk-actions { flex: none; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; padding: 8px 14px; border-top: 1px solid var(--line); background: var(--pane); }
+.mk-actions select { border: 1px solid var(--line); border-radius: var(--radius); padding: 4px 6px; max-width: 220px; }
+.mk-cmp { display: inline-flex; gap: 4px; }
+.mk-panel { border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; margin-top: 10px; background: var(--paper); font-size: 13px; }
+.mk-panel h4 { font-size: 13px; margin: 10px 0 4px; }
+.mk-rep-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 6px; }
+.mk-rep { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 6px; }
+.mk-tp { margin: 0 0 6px; font-family: var(--doc-font); font-size: 14px; text-align: justify; }
+.mk-tp.c { text-align: center; }
+.mk-tp.sig { display: flex; justify-content: space-between; margin-top: 18px; }
+#btnMk { margin-top: 6px; padding-left: 0; }
+@media (max-width: 1100px) { .mk-main { grid-template-columns: minmax(0, 1fr); grid-auto-rows: minmax(300px, auto); overflow: auto; } }
+.mk-sources li { flex-direction: column; align-items: stretch; gap: 4px; }
+.mk-sources li .tools { justify-content: flex-start; }
+
 </style>
 <script>
 /* тема ставится до отрисовки, чтобы страница не мигала светлой */
@@ -508,6 +558,7 @@ try { var t = (JSON.parse(localStorage.getItem('dovk_ui_v1') || '{}') || {}).the
           <select id="poaSelect"></select>
         </div>
         <div class="poa-card" id="poaCard"></div>
+        <button type="button" class="btn link small" id="btnMk" title="Подготовить новую основную доверенность из образцов: прежних доверенностей, проектов, перечней полномочий, договоров">Собрать основную доверенность из образцов</button>
         <div class="field" style="margin-top:8px">
           <label for="blankSelect">Бланк для этой основной доверенности</label>
           <select id="blankSelect"></select>
@@ -700,6 +751,7 @@ try { var t = (JSON.parse(localStorage.getItem('dovk_ui_v1') || '{}') || {}).the
       <button type="button" class="btn" id="btnPoaExport">Экспорт всех данных (JSON)</button>
       <label class="btn" style="display:inline-block">Импорт (JSON)<input type="file" id="poaImport" accept=".json" hidden></label>
     </div>
+    <button type="button" class="btn" id="btnMk2">Собрать из образцов</button>
     <button type="button" class="btn primary" id="btnPoaAdd">Добавить доверенность</button>
   </div>
 </dialog>
@@ -838,6 +890,65 @@ try { var t = (JSON.parse(localStorage.getItem('dovk_ui_v1') || '{}') || {}).the
   </div>
 </dialog>
 
+<!-- ================= main poa builder ================= -->
+<dialog id="dlgMk" class="full">
+  <div class="dlg-head"><h2>Сборка основной доверенности из образцов</h2><button type="button" class="btn small" data-close>Закрыть</button></div>
+  <div class="mk-main">
+    <section class="ck-pane mk-src">
+      <div class="ck-pane-head"><h3>Образцы</h3></div>
+      <div class="ck-scroll mk-pad">
+        <div class="field"><label for="mkType">Что загружается</label>
+          <select id="mkType"><option value="poa">доверенность или проект доверенности</option><option value="list">перечень полномочий (строка = полномочие)</option><option value="text">договор или другой текст</option></select></div>
+        <div class="row tight" style="flex-wrap:wrap">
+          <label class="btn small primary" style="display:inline-block">Загрузить файлы<input type="file" id="mkFile" accept=".docx,.pdf,.txt,.doc" multiple hidden></label>
+          <button type="button" class="btn small" id="btnMkPaste">Вставить текст</button>
+          <button type="button" class="btn small" id="btnMkFromPoa">Из конструктора</button>
+        </div>
+        <div id="mkPasteBox" class="mk-box" hidden>
+          <input type="text" id="mkPasteName" placeholder="Название образца">
+          <textarea id="mkPasteText" placeholder="Текст образца"></textarea>
+          <button type="button" class="btn small primary" id="btnMkPasteAdd">Добавить образец</button>
+        </div>
+        <div id="mkFromPoaBox" class="mk-box" hidden>
+          <select id="mkFromPoaSel"></select>
+          <button type="button" class="btn small primary" id="btnMkFromPoaAdd">Добавить как образец</button>
+        </div>
+        <ul class="list mk-sources" id="mkSources"></ul>
+        <p class="hint-p">DOCX, PDF с текстовым слоем, TXT или вставка. Доверенность и проект разбираются на блоки, разделы и пункты; перечень: каждая строка полномочие, строка с двоеточием в конце заголовок раздела; договор и другой текст делятся на фрагменты по «;» и предложениям. Из доверенности берутся и реквизиты для преамбулы (кнопка «Преамбула»).</p>
+      </div>
+    </section>
+    <section class="ck-pane mk-lib">
+      <div class="ck-pane-head"><h3>Формулировки</h3><span class="muted ck-src" id="mkLibInfo"></span><span class="spacer"></span><input type="search" id="mkSearch" class="mk-search" placeholder="Найти по словам"></div>
+      <div class="ck-scroll mk-pad" id="mkLib"></div>
+    </section>
+    <section class="ck-pane mk-draft">
+      <div class="ck-pane-head"><h3>Новая доверенность</h3><span class="muted ck-src" id="mkDraftInfo"></span><span class="spacer"></span><button type="button" class="btn small" id="btnMkClear">Очистить</button></div>
+      <div class="ck-scroll mk-pad">
+        <details id="mkFieldsBox" class="mk-fields"><summary>Преамбула, передоверие, срок и подпись</summary><div id="mkFields"></div></details>
+        <div id="mkDraft"></div>
+        <div id="mkReport" class="mk-panel" hidden></div>
+        <div id="mkText" class="mk-panel" hidden></div>
+        <div id="mkSaveBox" class="mk-panel" hidden>
+          <b>Сохранить как основную доверенность конструктора</b>
+          <p class="hint-p">После подписания: впишите номер, дату и срок, и доверенность появится в списке основных, по ней можно готовить проекты передоверия.</p>
+          <div class="row"><div class="field"><label>Номер</label><input type="text" id="mkSvNumber"></div><div class="field"><label>Дата выдачи</label><input type="date" id="mkSvDate"></div><div class="field"><label>Действует по</label><input type="date" id="mkSvValid"></div></div>
+          <div class="field"><label>Название в списке (необязательно)</label><input type="text" id="mkSvName" placeholder="Доверенность от 01.01.2027 № 1 (Иванов И.И.)"></div>
+          <div class="row"><div class="field"><label>Подпись в проектах передоверия: должность</label><input type="text" id="mkSvTitle" placeholder="Директор филиала"></div><div class="field"><label>Инициалы и фамилия</label><input type="text" id="mkSvShort" placeholder="П.П. Петров"></div></div>
+          <div class="field"><label>Кому разрешено передоверие</label><input type="text" id="mkSvSub" placeholder="работникам ООО «Ромашка»"></div>
+          <button type="button" class="btn primary small" id="btnMkSaveOk">Сохранить в конструктор</button>
+        </div>
+      </div>
+      <div class="mk-actions">
+        <label class="muted" for="mkBlank">Бланк</label><select id="mkBlank"></select>
+        <button type="button" class="btn primary small" id="btnMkDocx">Скачать проект (DOCX)</button>
+        <button type="button" class="btn small" id="btnMkText">Текст</button>
+        <span class="mk-cmp"><select id="mkCmpPoa" title="Действующая основная доверенность для сравнения"></select><button type="button" class="btn small" id="btnMkCmp">Сравнить</button></span>
+        <button type="button" class="btn small" id="btnMkSave">Сохранить в конструктор</button>
+      </div>
+    </section>
+  </div>
+</dialog>
+
 <!-- ================= review dialog ================= -->
 <dialog id="dlgReview" class="wide">
   <div class="dlg-head"><h2>Проверка измененных пунктов</h2><button type="button" class="btn small" data-close>Закрыть</button></div>
@@ -889,6 +1000,17 @@ try { var t = (JSON.parse(localStorage.getItem('dovk_ui_v1') || '{}') || {}).the
       <li>Если проект сделан в конструкторе и не пересохранялся в другой программе, конструктор сверяет текст с записанными в файл данными и сообщает, правили ли его после выгрузки.</li>
       <li>«Открыть в конструкторе» восстанавливает проект из данных файла, а для проекта из другой программы отмечает найденные пункты и переносит измененные формулировки, чтобы исправить проект и скачать заново. Пункты, которых нет в основной доверенности, не переносятся.</li>
       <li>Сравнение идет по словам, без ИИ и без интернета. Сужено полномочие или расширено по смыслу, решает юрист.</li>
+    </ul>
+    <h3>Сборка основной доверенности из образцов</h3>
+    <ul>
+      <li>Кнопка «Собрать основную доверенность из образцов» (под карточкой основной доверенности или в окне «Доверенности»). Окно в три колонки: образцы, формулировки, новая доверенность.</li>
+      <li><b>Образцы</b>: прежние доверенности и проекты, перечни полномочий, договоры (например, агентские) или любой другой текст. Выберите, что загружается, и загрузите файлы (DOCX, PDF с текстовым слоем, TXT) или вставьте текст. Основную доверенность из конструктора можно добавить кнопкой «Из конструктора».</li>
+      <li><b>Формулировки</b>: все пункты образцов по блокам и разделам. Дословно одинаковые объединяются (номера образцов, где они встречаются, показаны в кружках). Похожие собираются в варианты одного полномочия: у второго и следующих вариантов показана разница с первым. Блоки агентских договоров сводятся по номеру и дате договора.</li>
+      <li>«+ в доверенность» добавляет формулировку в ее блок и раздел. Формулировка без раздела (из перечня или договора) попадает в текущий раздел новой доверенности; текущий выбирается кнопкой «сделать текущим». «Все в доверенность» у образца переносит его целиком, например чтобы взять прежнюю доверенность за основу.</li>
+      <li><b>Новая доверенность</b>: заголовки блоков и разделов, тексты пунктов правятся прямо в полях, порядок меняется стрелками. Преамбула, передоверие, срок и подпись заполняются вверху колонки, по образцу (кнопка «Преамбула» у образца) или по основной доверенности конструктора.</li>
+      <li>Внизу: бланк (любой из бланков конструктора или без бланка, тогда заголовок «ДОВЕРЕННОСТЬ» стоит в тексте), скачивание проекта DOCX, текст для просмотра и копирования, сравнение с действующей основной доверенностью (новые, измененные с пословной разницей, исключенные полномочия).</li>
+      <li>«Сохранить в конструктор»: после подписания впишите номер, дату и срок, и доверенность появится среди основных; по ней сразу можно готовить проекты передоверия.</li>
+      <li>Пункты со ссылками на договоры, суммы и даты из чужих образцов проверьте особо: конструктор переносит их как есть. Образцы и собранная доверенность хранятся в браузере и входят в «Экспорт всех данных».</li>
     </ul>
     <h3>Сверка заявки и восстановление проекта</h3>
     <ul>
@@ -2577,14 +2699,18 @@ function pXml(p, textWtw) {
   // keepNext: абзац на одной странице со следующим; keepLines: абзац не разрывается;
   // widowControl: не оставлять одну строку абзаца внизу или вверху страницы (как в предпросмотре)
   const keep = p.keepNext ? '<w:keepNext/><w:keepLines/>' : '';
-  return `<w:p><w:pPr>${keep}<w:widowControl/>${sp}<w:ind w:left="0" w:firstLine="${first}"/><w:jc w:val="both"/></w:pPr>${p.runs.map(r => run(r.t, r.b)).join('')}</w:p>`;
+  return `<w:p><w:pPr>${keep}<w:widowControl/>${sp}<w:ind w:left="0" w:firstLine="${p.center ? 0 : first}"/><w:jc w:val="${p.center ? 'center' : 'both'}"/></w:pPr>${p.runs.map(r => run(r.t, r.b)).join('')}</w:p>`;
 }
-async function buildDocxBlob() {
-  const zip = await JSZip.loadAsync(b64ToU8(blank.zipB64));
+/* P: абзацы (по умолчанию проект передоверия), zipB64: бланк, withData: записать данные конструктора */
+async function buildDocxBlob(P, zipB64, withData = true) {
+  const zip = await JSZip.loadAsync(b64ToU8(zipB64 || blank.zipB64));
   const docXml = await zip.file('word/document.xml').async('string');
   const rootOpen = (docXml.match(/<w:document[^>]*>/) || ['<w:document xmlns:w="' + W_NS + '" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">'])[0];
   let sect = (docXml.match(/<w:sectPr[\s\S]*?<\/w:sectPr>/g) || []).pop() || `<w:sectPr><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="1134" w:right="851" w:bottom="1134" w:left="1701" w:header="567" w:footer="567" w:gutter="0"/></w:sectPr>`;
-  const textWtw = Math.round((blank.pgW - blank.mLeft - blank.mRight) * TW);
+  // ширина полосы набора по полям самого бланка
+  const tw = re => { const m = sect.match(re); return m ? Number(m[1]) : null; };
+  const pw = tw(/<w:pgSz[^>]*w:w="(\d+)"/), ml = tw(/<w:pgMar[^>]*w:left="(\d+)"/), mr = tw(/<w:pgMar[^>]*w:right="(\d+)"/);
+  const textWtw = pw && ml !== null && mr !== null ? pw - ml - mr : Math.round((blank.pgW - blank.mLeft - blank.mRight) * TW);
   // номера страниц со второй: добавляем обычный колонтитул, первая страница без номера
   if (state.opts.pageNum && !/w:headerReference[^>]*w:type="default"/.test(sect)) {
     const rid = 'rIdDovkHdr';
@@ -2600,8 +2726,8 @@ async function buildDocxBlob() {
     if (!/<w:titlePg\/>/.test(sect)) sect = sect.replace('</w:sectPr>', '<w:titlePg/></w:sectPr>');
   }
   // данные проекта для восстановления в конструкторе (на текст и печать не влияют)
-  await addProjectData(zip);
-  const body = buildDoc().map(p => pXml(p, textWtw)).join('') + sect;
+  if (withData) await addProjectData(zip);
+  const body = (P || buildDoc()).map(p => pXml(p, textWtw)).join('') + sect;
   zip.file('word/document.xml', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>` + rootOpen + '<w:body>' + body + '</w:body></w:document>');
   return zip.generateAsync({ type: 'blob', mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', compression: 'DEFLATE' });
 }
@@ -2811,7 +2937,7 @@ function bindPoas() {
     toast('Доверенность сохранена');
   });
   $('#btnPoaExport').addEventListener('click', () => {
-    const data = { app: 'dovk', version: 3, appVersion: APP_VERSION, exportedAt: new Date().toISOString(), poas: userPoas, drafts, blanks, poaBlank, ckRules };
+    const data = { app: 'dovk', version: 3, appVersion: APP_VERSION, exportedAt: new Date().toISOString(), poas: userPoas, drafts, blanks, poaBlank, ckRules, mk };
     const blob = new Blob([JSON.stringify(data, null, 1)], { type: 'application/json' });
     const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'конструктор_доверенностей_данные.json'; document.body.appendChild(a); a.click(); a.remove();
   });
@@ -2829,6 +2955,7 @@ function bindPoas() {
       let nb = 0; for (const b of blIn) { if (!b || !b.b64) continue; if (blanks.some(x => x.id === b.id || x.b64 === b.b64)) continue; blanks.push({ id: b.id || 'bl-' + uid(), name: b.name || 'Бланк', b64: b.b64 }); nb++; }
       if (data.poaBlank && typeof data.poaBlank === 'object') Object.assign(poaBlank, data.poaBlank);
       const nr = data.ckRules ? ckMergeRules(data.ckRules) : 0;
+      if (data.mk && data.mk.sources && (data.mk.sources.length || (data.mk.blocks || []).length) && (!mk.sources.length && !mkCount() || confirm('В файле есть сборка основной доверенности (образцы и проект). Заменить текущую сборку?'))) { mk = Object.assign(mkFresh(), data.mk); mkLib = null; lsSet(LS.mk, mk); }
       lsSet(LS.blanks, blanks); lsSet(LS.poaBlank, poaBlank); blank.id = null;
       renderPoaList(); renderPoaSelect(); renderPoaCard(); renderDatalists(); renderBlankInfo(); toast(`Импортировано: доверенностей ${np}, черновиков ${nd}, бланков ${nb}${nr ? `, решений проверки ${nr}` : ''}`);
     } catch (err) { toast('Не удалось прочитать файл: ' + err.message); }
@@ -2842,8 +2969,9 @@ function bindPoas() {
 /* ПРАВИЛО ДОРАБОТКИ: при каждом изменении конструктора повышается APP_VERSION, в APP_CHANGES добавляется строка,
    а в APP_FEATURES дописывается или правится возможность с номером версии, с которой она есть.
    Вкладки «Возможности ПО» и «Версии» в справке строятся из этих перечней. */
-const APP_VERSION = '2.1';
+const APP_VERSION = '2.2';
 const APP_CHANGES = [
+  ['2.2', '22.10.2026', 'сборка основной доверенности из образцов: прежние доверенности и проекты, перечни полномочий, договоры и другой текст (DOCX, PDF, TXT, вставка); одинаковые формулировки объединяются, похожие показываются вариантами с разницей; преамбула заполняется по образцу; проект DOCX на бланке или без бланка, сравнение с действующей основной доверенностью, сохранение в список основных доверенностей'],
   ['2.1', '22.10.2026', 'проверка проекта точнее: пункт, перечисляющий частные случаи пункта основной доверенности своими словами, получает статус «конкретизация» вместо «нет в основной»; слова «выше», «ниже» не считаются добавлением; из почти одинаковых пунктов разных блоков выбирается ближайший по тексту. Конструктор запоминает решения проверяющего: «охватывается пунктом», ручное сопоставление, слова, не меняющие смысл; решения сохраняются в файл и переносятся на другой компьютер'],
   ['2.0', '22.10.2026', 'проверка готового проекта доверенности, сделанного коллегой: DOCX (из конструктора или из СЭД), PDF с текстовым слоем, текст; каждый абзац сопоставляется с основной доверенностью (совпадает, сужен, изменен с добавлениями, нет в основной); щелчок по абзацу или выделение фрагмента подсвечивает исходный пункт основной доверенности, и наоборот; проверяются ссылка на основную доверенность, срок, разделы и повторы; найденные пункты переносятся в конструктор'],
   ['1.9', '22.10.2026', 'несколько бланков Word: у каждой основной доверенности (доверителя) свой бланк, выбор запоминается; чистый лист A4 с заголовком «ДОВЕРЕННОСТЬ»; из интерфейса и справки убраны названия конкретной организации и ФИО, конструктор подходит для доверенностей разных организаций'],
@@ -2898,6 +3026,15 @@ const APP_FEATURES = [
     ['В проект DOCX незаметно записываются пункты, правки, представители и срок; загруженный обратно файл восстанавливает проект для доработки', '1.3'],
     ['Свой бланк Word вместо встроенного: из него берутся поля и колонтитулы', '1.0'],
     ['Несколько бланков: для каждой основной доверенности (доверителя) свой бланк, выбор запоминается и переключается сам; добавление, переименование, удаление бланков; чистый лист A4 с заголовком «ДОВЕРЕННОСТЬ»', '1.9'],
+  ]],
+  ['Сборка основной доверенности', [
+    ['Образцы: доверенности и проекты (разбор на блоки, разделы и пункты), перечни полномочий (строка = полномочие), договоры и другой текст (фрагменты по «;» и предложениям); файлы DOCX, PDF с текстовым слоем, TXT, вставка текста; основная доверенность из конструктора', '2.2'],
+    ['Библиотека формулировок: дословно одинаковые объединяются с номерами образцов, похожие из разных образцов собираются в варианты одного полномочия с пословной разницей; блоки агентских договоров сводятся по номеру и дате; поиск по словам', '2.2'],
+    ['Новая доверенность: добавление формулировок в их блок и раздел или в текущий раздел, «все в доверенность» из образца, правка заголовков и текстов, порядок стрелками, свои блоки, разделы и пункты', '2.2'],
+    ['Преамбула, передоверие, срок и подпись: заполнение по образцу (реквизиты доверителя, подписант, основание, представитель, предмет, отмена) или по основной доверенности конструктора; место для паспортных данных', '2.2'],
+    ['Проект основной доверенности в DOCX на любом бланке или без бланка (заголовок «ДОВЕРЕННОСТЬ» в тексте), текст для просмотра и копирования', '2.2'],
+    ['Сравнение с действующей основной доверенностью: без изменений, измененные с пословной разницей, новые и исключенные полномочия', '2.2'],
+    ['Сохранение собранной доверенности в список основных доверенностей после подписания (номер, дата, срок, подпись в проектах передоверия); образцы и сборка хранятся в браузере и входят в экспорт всех данных', '2.2'],
   ]],
   ['Проверка проекта', [
     ['Проверка проекта, подготовленного коллегой: файл DOCX (из конструктора или из СЭД), PDF с текстовым слоем, TXT или вставка текста; файл можно перетащить в окно; основная доверенность выбирается по номеру в преамбуле', '2.0'],
@@ -4356,6 +4493,460 @@ function bindCheck() {
 }
 
 /* ======================================================================
+   Сборка основной доверенности из образцов: доверенности и проекты, перечни полномочий,
+   договоры и другой текст. Одинаковые формулировки объединяются, похожие показываются вариантами
+   ====================================================================== */
+const MK_FIELDS = [
+  ['principalBold', 'Доверитель, выделяемая часть (жирным)', 'input', 'Общество с ограниченной ответственностью «Ромашка»'],
+  ['principal', 'Доверитель, остальные реквизиты', 'area', '(ООО «Ромашка»), место нахождения: ..., ОГРН ..., ИНН ...'],
+  ['signerGen', 'В лице кого (родительный падеж)', 'input', 'генерального директора ООО «Ромашка» Иванова Ивана Ивановича'],
+  ['basis', 'Действующего на основании', 'input', 'Устава'],
+  ['delegationWord', 'Слово-связка', 'input', 'уполномочивает'],
+  ['agent', 'Кого уполномочивает (винительный падеж)', 'input', 'директора филиала ООО «Ромашка» Петрова Петра Петровича'],
+  ['scope', 'Абзац о предмете', 'area', 'представлять интересы ООО «Ромашка» (далее – Общество) ... с правом совершать следующие действия:'],
+  ['revocation', 'Абзац об отмене доверенностей', 'area', ''],
+  ['subPhrase', 'Фраза о передоверии', 'input', 'Доверенность выдана с правом передоверия работникам ООО «Ромашка».'],
+  ['term', 'Фраза о сроке', 'input', 'Срок действия настоящей доверенности два года.'],
+  ['signTitle', 'Подпись: должность', 'input', 'Генеральный директор'],
+  ['signShort', 'Подпись: инициалы и фамилия', 'input', 'И.И. Иванов'],
+];
+const MK_TYPES = { poa: 'доверенность или проект', list: 'перечень полномочий', text: 'договор или другой текст' };
+LS.mk = 'dovk_mk_v1';
+function mkFresh() { return { sources: [], fields: { delegationWord: 'уполномочивает' }, pdBlank: true, blocks: [], blankId: 'plain', active: null, save: {} }; }
+let mk = Object.assign(mkFresh(), lsGet(LS.mk, {}));
+const saveMk = debounce(() => lsSet(LS.mk, mk), 300);
+let mkLib = null, mkShowText = false;
+
+/* ---------- разбор образца ---------- */
+function mkPlainBlocks(blocks) {
+  return blocks.map(b => ({ title: b.title || '', sections: b.sections.map(s => ({ heading: s.heading || '', items: s.items.map(it => ({ text: cleanEnd(it.text) })).filter(it => it.text) })).filter(s => s.items.length) })).filter(b => b.sections.length);
+}
+function mkParse(paras, type) {
+  if (type === 'poa') {
+    const text = paras.join('\n');
+    const m = autoMarkup(text);
+    if (m !== text) { const bl = mkPlainBlocks(markupToStruct(m, [])); if (bl.length) return bl; }
+    type = 'list';   // разметка не нашла разделов: образец разбирается как перечень
+  }
+  const block = { title: '', sections: [] }; let sec = null;
+  const newSec = h => { sec = { heading: h, items: [] }; block.sections.push(sec); };
+  for (const raw of paras) {
+    const p = String(raw || '').replace(/\s+/g, ' ').trim(); if (!p) continue;
+    if (type === 'list') {
+      const t = ckClean(p);
+      if (/:\s*$/.test(p) && t.length < 160) { newSec(t.replace(/:?\s*$/, ':')); continue; }
+      if (!sec) newSec('');
+      if (t.length >= 3) sec.items.push({ text: t });
+    } else {
+      // договор или другой текст: фрагменты по «;», по концу предложения и по нумерации подпунктов
+      if (!sec) newSec('');
+      for (const part of p.split(/;\s+|(?<=[.!?])\s+(?=[А-ЯЁ0-9«])|\s(?=\d{1,2}(?:\.\d{1,2})+\.?\s)/)) {
+        const t = ckClean(part);
+        if (rawWords(t).length >= 4) sec.items.push({ text: t });
+      }
+    }
+  }
+  return block.sections.some(s => s.items.length) ? [{ title: block.title, sections: block.sections.filter(s => s.items.length) }] : [];
+}
+/* реквизиты и фразы доверенности из текста образца */
+function mkGuessFields(paras) {
+  const f = {}; const all = paras.map(p => String(p || '').replace(/\s+/g, ' ').trim()).filter(Boolean);
+  const pre = all.find(p => /в\s+лице/i.test(p) && /уполномочива/i.test(p)) || all.find(p => /в\s+лице/i.test(p));
+  if (pre) {
+    const i = pre.search(/,?\s+в\s+лице\s+/i);
+    const head = pre.slice(0, i).trim(); const k = head.indexOf('(');
+    if (k > 0) { f.principalBold = head.slice(0, k).trim(); f.principal = head.slice(k).trim(); } else f.principalBold = head;
+    const m = pre.match(/в\s+лице\s+(.+?),\s*действующ\S*\s+на\s+основании\s+(.+?),\s*(уполномочивает)(\s*\(в\s+порядке\s+передоверия\))?\s+(.+)$/i);
+    if (m) {
+      f.signerGen = m[1]; f.basis = m[2]; f.delegationWord = m[3];
+      f.agent = m[5].split(/\s*\(паспорт|\s*\(_{3,}|,\s*представлять\s+интересы/i)[0].replace(/[,\s(]+$/, '');
+      const sc = pre.match(/(представлять\s+интересы.*?:)\s*$/i); if (sc) f.scope = sc[1];
+    }
+  }
+  if (!f.scope) { const s = all.find(p => /^представлять\s+интересы/i.test(p) && /:\s*$/.test(p)); if (s) f.scope = s; }
+  const rev = all.find(p => /^Сведения\s+об\s+отмене/i.test(p)); if (rev) f.revocation = rev;
+  const sub = all.find(p => /передоверия/i.test(p) && p.length < 300 && !/в\s+лице/i.test(p) && !/^(в рамках|[-•])/i.test(p)); if (sub) f.subPhrase = sub;
+  const term = all.find(p => /срок\s+действия|выдана\s+сроком|сроком\s+(по|на|до)/i.test(p) && p.length < 300 && !/в\s+лице/i.test(p)); if (term) f.term = term;
+  for (let i = all.length - 1; i >= Math.max(0, all.length - 6); i--) {
+    const m = all[i].match(/^(.*?)\s*([А-ЯЁ]\.\s?[А-ЯЁ]\.\s?[А-ЯЁ][а-яё-]+)\s*$/);
+    if (m && all[i].length < 150) { f.signShort = m[2].replace(/\.\s+/g, '.').replace(/\.(?=[А-ЯЁ][а-яё])/, '. '); if (m[1]) f.signTitle = m[1].trim(); else if (i > 0 && all[i - 1].length < 80 && !/[.;:]$/.test(all[i - 1])) f.signTitle = all[i - 1]; break; }
+  }
+  return f;
+}
+function mkFieldsFromPoa(p) {
+  return { principalBold: p.principalBold || '', principal: p.principal || '', agent: p.signerGen || '', scope: p.scope || '', revocation: p.revocation || '',
+    subPhrase: p.subDelegation ? `Доверенность выдана с правом передоверия ${p.subDelegation}.` : '' };
+}
+
+/* ---------- библиотека формулировок ---------- */
+function mkBlockKey(title) {
+  if (!title) return '';
+  const n = title.match(/№\s*([^\s,;:]+)/); const d = title.match(/от\s+(\d{1,2}\s+\S+\s+\d{4}|\d{1,2}\.\d{1,2}\.\d{4})/);
+  return n ? 'n:' + normTight(n[1]) + (d ? ':' + (ckParseDate(d[1]) || '') : '') : 't:' + normTight(title).slice(0, 80);
+}
+function mkBuildLib() {
+  const blocks = []; const bmap = new Map();
+  mk.sources.forEach((src, si) => {
+    for (const b of src.blocks) {
+      const bk = mkBlockKey(b.title);
+      let B = bmap.get(bk); if (!B) { B = { key: bk, title: b.title, secs: [], smap: new Map() }; bmap.set(bk, B); blocks.push(B); }
+      for (const s of b.sections) {
+        const sk = s.heading ? headNorm(s.heading) : '';
+        let S = B.smap.get(sk); if (!S) { S = { key: sk, heading: s.heading, clusters: [] }; B.smap.set(sk, S); B.secs.push(S); }
+        for (const it of s.items) {
+          const norm = normTight(it.text), st = stems(it.text);
+          let placed = false;
+          for (const c of S.clusters) {
+            const v = c.variants.find(x => x.norm === norm);
+            if (v) { if (!v.srcs.includes(si)) v.srcs.push(si); placed = true; break; }
+            if (c.variants.some(x => x.srcs.includes(si))) continue;   // два разных пункта одного образца не варианты друг друга
+            const r = c.variants[0]; let n = 0; for (const w of st) if (r.S.has(w)) n++;
+            if (st.size && r.S.size && Math.min(n / st.size, n / r.S.size) >= 0.6) { c.variants.push({ text: it.text, norm, S: st, srcs: [si] }); placed = true; break; }
+          }
+          if (!placed) S.clusters.push({ variants: [{ text: it.text, norm, S: st, srcs: [si] }] });
+        }
+      }
+    }
+  });
+  // общие полномочия первыми, варианты по числу образцов
+  blocks.sort((a, b) => (a.key === '' ? -1 : 0) - (b.key === '' ? -1 : 0));
+  for (const B of blocks) for (const S of B.secs) for (const c of S.clusters) c.variants.sort((a, b) => b.srcs.length - a.srcs.length);
+  mkLib = blocks;
+}
+
+/* ---------- проект доверенности ---------- */
+function mkFindBlock(key, title, create) {
+  let b = mk.blocks.find(x => x.key === key);
+  if (!b && create) { b = { id: 'mb' + uid(), key, title: title || '', sections: [] }; if (key === '') mk.blocks.unshift(b); else mk.blocks.push(b); }
+  return b;
+}
+function mkFindSection(b, key, heading, create) {
+  let s = b.sections.find(x => x.key === key);
+  if (!s && create) { s = { id: 'ms' + uid(), key, heading: heading || '', items: [] }; b.sections.push(s); }
+  return s;
+}
+/* есть ли формулировка в доверенности (в том же блоке: одинаковые пункты разных агентских договоров различаются) */
+function mkHas(text, bKey) { const n = normTight(text); for (const b of mk.blocks) { if (bKey !== undefined && b.key !== bKey) continue; for (const s of b.sections) for (const it of s.items) if (normTight(it.text) === n) return { b, s, it }; } return null; }
+function mkAdd(bKey, bTitle, sKey, heading, text) {
+  let b, s;
+  if (!sKey && mk.active) { b = mk.blocks.find(x => x.id === mk.active.b); s = b && b.sections.find(x => x.id === mk.active.s); }
+  if (!s) { b = mkFindBlock(bKey, bTitle, true); s = mkFindSection(b, sKey, heading, true); }
+  const it = { id: 'mi' + uid(), text: cleanEnd(text) };
+  s.items.push(it); mk.active = { b: b.id, s: s.id };
+  saveMk(); return it;
+}
+function mkCount() { let n = 0; for (const b of mk.blocks) for (const s of b.sections) n += s.items.length; return n; }
+function mkDoc() {
+  const f = mk.fields, P = [];
+  if (mk.blankId === 'none') P.push({ kind: 'title', runs: [{ t: 'ДОВЕРЕННОСТЬ', b: true }], center: true, keepNext: true });
+  const pre = [];
+  if (f.principalBold) pre.push({ t: f.principalBold, b: true });
+  const tail = [f.principal, f.signerGen ? 'в лице ' + f.signerGen : '', f.basis ? 'действующего на основании ' + f.basis : ''].filter(Boolean).join(', ');
+  pre.push({ t: (f.principalBold ? ' ' : '') + tail + ', ' + (f.delegationWord || 'уполномочивает') + ' ' + (f.agent || NAME_BLANK) + (mk.pdBlank ? ' (паспорт ____________________________)' : '') + ',', b: false });
+  P.push({ kind: 'body', runs: pre, before: mk.blankId === 'none' ? 12 : Number(state.opts.gap) || 0 });
+  if (f.scope) P.push({ kind: 'body', runs: [{ t: f.scope, b: false }] });
+  const itemParas = [];
+  for (const b of mk.blocks) {
+    const secs = b.sections.filter(s => s.items.some(it => cleanEnd(it.text)));
+    if (!secs.length) continue;
+    if (b.title) P.push({ kind: 'title', runs: [{ t: b.title, b: !!state.opts.boldHead }], keepNext: true });
+    for (const s of secs) {
+      if (s.heading) P.push({ kind: 'heading', runs: [{ t: '- ', b: false }, { t: s.heading, b: !!state.opts.boldHead }], keepNext: true });
+      for (const it of s.items) { const t = cleanEnd(it.text); if (!t) continue; const p = { kind: 'item', runs: [{ t, b: false }] }; P.push(p); itemParas.push(p); }
+    }
+  }
+  itemParas.forEach((p, i) => { p.runs[0].t += i === itemParas.length - 1 ? '.' : ';'; });
+  if (f.revocation) P.push({ kind: 'body', runs: [{ t: f.revocation, b: false }] });
+  if (f.subPhrase) P.push({ kind: 'body', runs: [{ t: f.subPhrase, b: false }], keepNext: true });
+  if (f.term) P.push({ kind: 'body', runs: [{ t: f.term, b: false }], keepNext: true });
+  P.push({ kind: 'signature', left: f.signTitle || '', right: f.signShort || '', before: 36 });
+  if (state.opts.nbsp !== false) for (const p of P) {
+    if (!p.runs) continue;
+    const full = p.runs.map(r => r.t).join(''); const fx = nbspText(full);
+    if (fx.length !== full.length) continue;
+    let k = 0; for (const r of p.runs) { const n = r.t.length; r.t = fx.slice(k, k + n); k += n; }
+  }
+  return P;
+}
+/* лист без шапки */
+async function mkEmptyBlank() {
+  const R = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships';
+  const z = new JSZip();
+  z.file('[Content_Types].xml', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/><Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/></Types>');
+  z.file('_rels/.rels', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="${R}/officeDocument" Target="word/document.xml"/></Relationships>`);
+  z.file('word/_rels/document.xml.rels', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="${R}/styles" Target="styles.xml"/></Relationships>`);
+  z.file('word/styles.xml', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:styles xmlns:w="${W_NS}"><w:docDefaults><w:rPrDefault><w:rPr><w:rFonts w:ascii="Times New Roman" w:hAnsi="Times New Roman" w:cs="Times New Roman" w:eastAsia="Times New Roman"/><w:sz w:val="24"/><w:szCs w:val="24"/><w:lang w:val="ru-RU"/></w:rPr></w:rPrDefault><w:pPrDefault><w:pPr><w:spacing w:after="0" w:line="240" w:lineRule="auto"/></w:pPr></w:pPrDefault></w:docDefaults></w:styles>`);
+  z.file('word/document.xml', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document xmlns:w="${W_NS}" xmlns:r="${R}"><w:body><w:p/><w:sectPr><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="1134" w:right="851" w:bottom="1134" w:left="1701" w:header="567" w:footer="567" w:gutter="0"/><w:cols w:space="708"/></w:sectPr></w:body></w:document>`);
+  return z.generateAsync({ type: 'base64', compression: 'DEFLATE' });
+}
+async function mkDownload() {
+  if (!mkCount()) { toast('В доверенности нет ни одного полномочия'); return; }
+  try {
+    const b64 = mk.blankId === 'none' ? await mkEmptyBlank() : await blankB64(mk.blankId);
+    const blob = await buildDocxBlob(mkDoc(), b64, false);
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'Проект основной доверенности.docx'; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+    toast('Проект основной доверенности сформирован');
+  } catch (e) { console.error(e); toast('Ошибка при формировании DOCX: ' + e.message); }
+}
+/* сравнение с действующей основной доверенностью */
+function mkCompare(poaId) {
+  const poa = getPoa(poaId); if (!poa) return;
+  const idx = ckIndex(poa); const used = new Set();
+  const rows = [];
+  for (const b of mk.blocks) {
+    const pb = poa.blocks.find(x => mkBlockKey(x.title) === b.key) || null;
+    for (const s of b.sections) {
+      const ps = pb && s.heading ? pb.sections.find(x => headNorm(x.heading) === headNorm(s.heading)) : null;
+      for (const it of s.items) {
+        const t = cleanEnd(it.text); if (!t) continue;
+        // одинаковые пункты разных блоков: берется пункт своего блока и еще не сопоставленный
+        const cands = ckRank(t, idx, { block: pb, section: ps });
+        const ex = cands.find(c => c.exact && !used.has(c.x.it.id));
+        if (ex) { used.add(ex.x.it.id); rows.push({ k: 'same', t }); continue; }
+        const top = cands.find(c => c.rank >= 0.55 && !used.has(c.x.it.id));
+        if (top) { used.add(top.x.it.id); rows.push({ k: 'changed', t, x: top.x, d: ckDiff(top.x.text, t) }); continue; }
+        rows.push({ k: 'new', t });
+      }
+    }
+  }
+  const removed = idx.items.filter(x => !used.has(x.it.id));
+  const nSame = rows.filter(r => r.k === 'same').length, ch = rows.filter(r => r.k === 'changed'), nw = rows.filter(r => r.k === 'new');
+  $('#mkReport').innerHTML = `<div class="mk-rep-head"><b>Сравнение с доверенностью ${esc(poa.name)}</b><button type="button" class="btn small" id="btnMkRepClose">Закрыть</button></div>
+    <div class="ck-sum-row"><span class="badge cs-ok">без изменений: ${nSame}</span><span class="badge cs-warn">изменено: ${ch.length}</span><span class="badge cs-info">новые: ${nw.length}</span><span class="badge cs-err">исключены: ${removed.length}</span></div>
+    ${nw.length ? `<h4>Новые полномочия (нет в действующей)</h4><ul class="mk-rep">${nw.map(r => `<li>${esc(r.t)}</li>`).join('')}</ul>` : ''}
+    ${ch.length ? `<h4>Измененные</h4><ul class="mk-rep">${ch.map(r => `<li><div class="muted">${esc(ckWhere(r.x))}</div><div class="df-text">${ckDiffHtml(r.d.ops)}</div></li>`).join('')}</ul>` : ''}
+    ${removed.length ? `<h4>Исключены (есть в действующей, нет в новой)</h4><ul class="mk-rep">${removed.map(x => `<li><div class="muted">${esc(ckWhere(x))}</div>${esc(x.text)}</li>`).join('')}</ul>` : ''}`;
+  $('#mkReport').hidden = false; $('#mkReport').scrollIntoView({ block: 'start', behavior: 'smooth' });
+}
+/* сохранить как основную доверенность конструктора */
+function mkSaveToConstructor() {
+  const g = id => $('#' + id).value.trim();
+  const sv = mk.save = { name: g('mkSvName'), number: g('mkSvNumber'), date: g('mkSvDate'), validUntil: g('mkSvValid'), signerTitle: g('mkSvTitle'), signerShort: g('mkSvShort'), subDelegation: g('mkSvSub') };
+  saveMk();
+  if (!sv.number || !isIso(sv.date) || !isIso(sv.validUntil)) { toast('Укажите номер, дату выдачи и срок действия подписанной доверенности'); return; }
+  if (!mkCount()) { toast('В доверенности нет ни одного полномочия'); return; }
+  if (mk.blocks.some(b => b.sections.some(s => !String(s.heading || '').trim() && s.items.some(it => cleanEnd(it.text))))) { toast('У каждого раздела с пунктами должен быть заголовок («заключать ...», «подписывать:»): конструктор передоверия выводит его в проект'); return; }
+  if (mk.blocks.some((b, i) => !String(b.title || '').trim() && b.key !== '' && b.sections.some(s => s.items.length))) { toast('У блока агентского договора нет заголовка'); return; }
+  const f = mk.fields;
+  let bi = 0;
+  const blocks = mk.blocks.filter(b => b.sections.some(s => s.items.some(it => cleanEnd(it.text)))).map(b => {
+    const bid = 'b' + (++bi); let si = 0;
+    return { id: bid, title: b.title || '', sections: b.sections.filter(s => s.items.some(it => cleanEnd(it.text))).map(s => {
+      const sid = bid + 's' + (++si); let ii = 0;
+      return { id: sid, heading: s.heading, items: s.items.filter(it => cleanEnd(it.text)).map(it => ({ id: sid + 'i' + (++ii), text: cleanEnd(it.text) })) };
+    }) };
+  });
+  const p = { id: 'poa-' + uid(), name: sv.name || `Доверенность от ${fmtDateShort(sv.date)} № ${sv.number}`, number: sv.number, date: sv.date, validUntil: sv.validUntil,
+    principalBold: f.principalBold || '', principal: f.principal || '', signerGen: f.agent || '', basis: `доверенности от ${fmtDateShort(sv.date)} № ${sv.number}`,
+    delegationWord: 'уполномочивает (в порядке передоверия)', scope: f.scope || '', revocation: f.revocation || '', termTemplate: 'Доверенность выдана сроком по {ДАТА} включительно.',
+    signerTitle: sv.signerTitle, signerShort: sv.signerShort, subDelegation: sv.subDelegation, note: 'Собрана из образцов в конструкторе', blocks };
+  userPoas.push(p); lsSet(LS.poas, userPoas);
+  poaBlank[p.id] = mk.blankId === 'none' ? PLAIN_ID : mk.blankId; lsSet(LS.poaBlank, poaBlank);
+  renderPoaSelect(); renderPoaList();
+  $('#mkSaveBox').hidden = true;
+  if (confirm(`Доверенность «${p.name}» добавлена в список основных доверенностей. Перейти к ней в конструкторе?`)) { $('#dlgMk').close(); switchPoa(p.id, selectedCount() === 0); }
+  else toast('Доверенность добавлена в список основных доверенностей');
+}
+
+/* ---------- отрисовка ---------- */
+function mkRenderSources() {
+  $('#mkSources').innerHTML = mk.sources.map((s, i) => {
+    const n = s.blocks.reduce((a, b) => a + b.sections.reduce((c, x) => c + x.items.length, 0), 0);
+    const nf = Object.keys(s.fields || {}).length;
+    return `<li><div class="main"><div class="t"><span class="mk-sn">${i + 1}</span> ${esc(s.name)}</div><div class="s">${esc(MK_TYPES[s.type] || '')}, ${n} ${plural(n, 'формулировка', 'формулировки', 'формулировок')}${nf ? ', есть преамбула' : ''}</div></div>
+      <div class="tools">${nf ? `<button type="button" class="btn small" data-mk-fields="${i}" title="Заполнить преамбулу, срок и подпись по этому образцу">Преамбула</button>` : ''}<button type="button" class="btn small" data-mk-all="${i}" title="Добавить в доверенность все формулировки этого образца">Все в доверенность</button><button type="button" class="btn small danger" data-mk-del="${i}">Удалить</button></div></li>`;
+  }).join('') || '<li class="muted">Образцов пока нет</li>';
+}
+function mkSrcChips(srcs) { return srcs.map(i => `<span class="mk-sn" title="${esc(mk.sources[i] ? mk.sources[i].name : '')}">${i + 1}</span>`).join(''); }
+function mkRenderLib() {
+  if (!mkLib) mkBuildLib();
+  const terms = $('#mkSearch').value.trim().toLowerCase().split(/\s+/).filter(Boolean);
+  let nC = 0, nV = 0;
+  const html = mkLib.map((B, bi) => {
+    const secs = B.secs.map((S, si) => {
+      const cl = S.clusters.map((c, ci) => {
+        if (terms.length && !c.variants.some(v => matches(v.text, terms))) return '';
+        nC++; nV += c.variants.length;
+        const base = c.variants[0];
+        const rows = c.variants.map((v, vi) => {
+          const has = mkHas(v.text, B.key);
+          const body = vi === 0 || c.variants.length === 1 ? hl(v.text, terms) : ckDiffHtml(ckDiff(base.text, v.text).ops);
+          return `<div class="mk-v${has ? ' in' : ''}"><div class="mk-vt">${body}</div><div class="mk-vm">${mkSrcChips(v.srcs)}
+            ${has ? '<span class="tag custom">в доверенности</span>' : `<button type="button" class="btn small" data-mk-add="${bi}:${si}:${ci}:${vi}">+ в доверенность</button>`}</div></div>`;
+        }).join('');
+        return `<div class="mk-c${c.variants.length > 1 ? ' multi' : ''}">${c.variants.length > 1 ? `<div class="mk-ch">вариантов: ${c.variants.length} <span class="muted">(у вариантов показана разница с первым)</span></div>` : ''}${rows}</div>`;
+      }).join('');
+      if (!cl) return '';
+      return `<div class="mk-s"><div class="mk-sh">${S.heading ? esc(S.heading) : '<span class="muted">без раздела</span>'}</div>${cl}</div>`;
+    }).join('');
+    if (!secs) return '';
+    return `<div class="mk-b"><div class="mk-bh">${B.title ? esc(B.title) : (B.key === '' ? 'Общие полномочия' : '')}</div>${secs}</div>`;
+  }).join('');
+  $('#mkLib').innerHTML = html || `<div class="empty-note">${mk.sources.length ? 'Ничего не найдено' : 'Загрузите образцы слева: формулировки появятся здесь'}</div>`;
+  $('#mkLibInfo').textContent = nC ? `${nC} ${plural(nC, 'полномочие', 'полномочия', 'полномочий')}, вариантов ${nV}` : '';
+}
+function mkRenderFields() {
+  const f = mk.fields;
+  $('#mkFields').innerHTML = MK_FIELDS.map(([k, label, kind, ph]) => `<div class="field"><label>${esc(label)}</label>${kind === 'area'
+    ? `<textarea data-mkf="${k}" placeholder="${esc(ph)}">${esc(f[k] || '')}</textarea>` : `<input type="text" data-mkf="${k}" value="${esc(f[k] || '')}" placeholder="${esc(ph)}">`}</div>`).join('')
+    + `<label class="check"><input type="checkbox" id="mkPd" ${mk.pdBlank ? 'checked' : ''}> <span>Место для паспортных данных после «кого уполномочивает»</span></label>
+    <div class="row tight" style="flex-wrap:wrap"><span class="muted">Заполнить по основной доверенности конструктора:</span><select id="mkFillPoa">${allPoas().map(p => `<option value="${esc(p.id)}">${esc(p.name)}</option>`).join('')}</select><button type="button" class="btn small" id="btnMkFillPoa">Заполнить</button></div>`;
+}
+function mkRenderDraft() {
+  const n = mkCount();
+  $('#mkDraftInfo').textContent = n ? `${n} ${plural(n, 'полномочие', 'полномочия', 'полномочий')}` : '';
+  const act = mk.active || {};
+  $('#mkDraft').innerHTML = mk.blocks.map((b, bi) => `<div class="mk-db" data-mkb="${b.id}">
+      <div class="mk-dbh">${b.key === '' && !b.title ? '<b>Общие полномочия</b>' : `<textarea class="mk-in" data-mk-btitle="${b.id}" rows="2" placeholder="в рамках исполнения ... от имени Общества:">${esc(b.title)}</textarea>`}
+        <span class="mk-tools"><button type="button" class="btn link small" data-mk-bup="${b.id}" ${bi === 0 ? 'disabled' : ''} title="Выше">▲</button><button type="button" class="btn link small" data-mk-bdown="${b.id}" ${bi === mk.blocks.length - 1 ? 'disabled' : ''} title="Ниже">▼</button><button type="button" class="btn link small danger" data-mk-bdel="${b.id}" title="Удалить блок">×</button></span></div>
+      ${b.sections.map((s, si) => `<div class="mk-ds${act.s === s.id ? ' active' : ''}" data-mks="${s.id}">
+        <div class="mk-dsh"><input type="text" class="mk-in" data-mk-shead="${b.id}:${s.id}" value="${esc(s.heading)}" placeholder="заголовок раздела, например «подписывать:»">
+          <span class="mk-tools"><button type="button" class="btn link small" data-mk-sact="${b.id}:${s.id}" title="Сюда будут добавляться формулировки без раздела">${act.s === s.id ? 'текущий' : 'сделать текущим'}</button><button type="button" class="btn link small" data-mk-sup="${b.id}:${s.id}" ${si === 0 ? 'disabled' : ''}>▲</button><button type="button" class="btn link small" data-mk-sdown="${b.id}:${s.id}" ${si === b.sections.length - 1 ? 'disabled' : ''}>▼</button><button type="button" class="btn link small danger" data-mk-sdel="${b.id}:${s.id}" title="Удалить раздел">×</button></span></div>
+        ${s.items.map((it, ii) => `<div class="mk-di" data-mki="${it.id}"><textarea class="mk-in" data-mk-itext="${b.id}:${s.id}:${it.id}" rows="2">${esc(it.text)}</textarea>
+          <span class="mk-tools"><button type="button" class="btn link small" data-mk-iup="${b.id}:${s.id}:${it.id}" ${ii === 0 ? 'disabled' : ''}>▲</button><button type="button" class="btn link small" data-mk-idown="${b.id}:${s.id}:${it.id}" ${ii === s.items.length - 1 ? 'disabled' : ''}>▼</button><button type="button" class="btn link small danger" data-mk-idel="${b.id}:${s.id}:${it.id}">×</button></span></div>`).join('')}
+        <button type="button" class="btn link small" data-mk-iadd="${b.id}:${s.id}">+ свой пункт</button></div>`).join('')}
+      <button type="button" class="btn link small" data-mk-sadd="${b.id}">+ раздел</button></div>`).join('')
+    + `<div class="row tight" style="margin-top:8px"><button type="button" class="btn small" id="btnMkBlockAdd">+ блок (агентский договор)</button>${mk.blocks.some(b => b.key === '') ? '' : '<button type="button" class="btn small" id="btnMkGenAdd">+ общие полномочия</button>'}</div>`;
+  $$('#mkDraft textarea.mk-in').forEach(ta => { ta.style.height = 'auto'; ta.style.height = (ta.scrollHeight + 2) + 'px'; });
+  if (mkShowText) mkRenderText();
+}
+function mkRenderText() {
+  $('#mkText').innerHTML = `<div class="mk-rep-head"><b>Текст доверенности</b><button type="button" class="btn small" id="btnMkTextCopy">Скопировать</button></div>` + mkDoc().map(p => p.kind === 'signature'
+    ? `<p class="mk-tp sig"><b>${esc(p.left)}</b><b>${esc(p.right)}</b></p>` : `<p class="mk-tp${p.center ? ' c' : ''}">${p.runs.map(r => r.b ? `<b>${esc(r.t)}</b>` : esc(r.t)).join('')}</p>`).join('');
+}
+function mkRenderAll() {
+  mkRenderSources(); mkRenderLib(); mkRenderFields(); mkRenderDraft();
+  $('#mkBlank').innerHTML = [...blankList(), { id: 'none', name: 'Без бланка: заголовок «ДОВЕРЕННОСТЬ» в тексте' }].map(b => `<option value="${esc(b.id)}">${esc(b.name)}</option>`).join('');
+  $('#mkBlank').value = mk.blankId || 'plain';
+  $('#mkCmpPoa').innerHTML = allPoas().map(p => `<option value="${esc(p.id)}">${esc(p.name)}</option>`).join('');
+  $('#mkCmpPoa').value = state.poaId;
+}
+async function mkAddSource(name, paras, type) {
+  const blocks = mkParse(paras, type);
+  if (!blocks.length) { toast(`В образце «${name}» не найдено формулировок`); return; }
+  mk.sources.push({ id: 's' + uid(), name, type, blocks, fields: type === 'poa' ? mkGuessFields(paras) : {} });
+  mkLib = null; saveMk(); mkRenderSources(); mkRenderLib();
+  const n = blocks.reduce((a, b) => a + b.sections.reduce((c, x) => c + x.items.length, 0), 0);
+  toast(`Образец «${name}»: ${n} ${plural(n, 'формулировка', 'формулировки', 'формулировок')}`);
+}
+async function mkReadFile(f, type) {
+  const buf = await f.arrayBuffer();
+  if (/\.docx$/i.test(f.name)) { const r = await readDocx(buf); return r.paras.flatMap(p => ckParagraphsFromText(p)); }
+  if (/\.pdf$/i.test(f.name)) { const r = await ckReadPdf(buf); if (r.chars < 40) throw new Error('в PDF нет текстового слоя'); return r.paras; }
+  if (/\.doc$/i.test(f.name)) throw new Error('старый формат .doc: сохраните как .docx');
+  let txt = new TextDecoder('utf-8').decode(buf);
+  if ((txt.match(/�/g) || []).length > 3) txt = new TextDecoder('windows-1251').decode(buf);
+  return type === 'list' ? txt.replace(/\r/g, '').split('\n') : ckParagraphsFromText(txt);
+}
+function mkLoc(v) { const [b, s, i] = v.split(':'); const B = mk.blocks.find(x => x.id === b); const S = B && B.sections.find(x => x.id === s); const I = S && i ? S.items.find(x => x.id === i) : null; return { B, S, I }; }
+function mkMove(arr, el, d) { const i = arr.indexOf(el), j = i + d; if (i < 0 || j < 0 || j >= arr.length) return; [arr[i], arr[j]] = [arr[j], arr[i]]; }
+function bindMk() {
+  $('#btnMk').addEventListener('click', () => { mkRenderAll(); $('#dlgMk').showModal(); });
+  $('#btnMk2').addEventListener('click', () => { $('#dlgPoas').close(); mkRenderAll(); $('#dlgMk').showModal(); });
+  $('#mkFile').addEventListener('change', async e => {
+    const files = [...e.target.files]; e.target.value = '';
+    for (const f of files) { try { await mkAddSource(f.name.replace(/\.(docx|pdf|txt)$/i, ''), await mkReadFile(f, $('#mkType').value), $('#mkType').value); } catch (err) { toast(`«${f.name}»: ${err.message}`); } }
+  });
+  $('#btnMkPaste').addEventListener('click', () => { $('#mkPasteBox').hidden = !$('#mkPasteBox').hidden; $('#mkFromPoaBox').hidden = true; });
+  $('#btnMkPasteAdd').addEventListener('click', async () => {
+    const t = $('#mkPasteText').value; if (!t.trim()) { toast('Вставьте текст'); return; }
+    const type = $('#mkType').value;
+    await mkAddSource($('#mkPasteName').value.trim() || `Текст ${mk.sources.length + 1}`, type === 'list' ? t.split('\n') : ckParagraphsFromText(t), type);
+    $('#mkPasteText').value = ''; $('#mkPasteName').value = ''; $('#mkPasteBox').hidden = true;
+  });
+  $('#btnMkFromPoa').addEventListener('click', () => {
+    $('#mkFromPoaSel').innerHTML = allPoas().map(p => `<option value="${esc(p.id)}">${esc(p.name)}</option>`).join('');
+    $('#mkFromPoaBox').hidden = !$('#mkFromPoaBox').hidden; $('#mkPasteBox').hidden = true;
+  });
+  $('#btnMkFromPoaAdd').addEventListener('click', () => {
+    const p = getPoa($('#mkFromPoaSel').value); if (!p) return;
+    mk.sources.push({ id: 's' + uid(), name: p.name, type: 'poa', blocks: mkPlainBlocks(p.blocks), fields: mkFieldsFromPoa(p) });
+    mkLib = null; saveMk(); mkRenderSources(); mkRenderLib(); $('#mkFromPoaBox').hidden = true; toast('Основная доверенность добавлена как образец');
+  });
+  $('#mkSources').addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    if (b.dataset.mkDel) { if (!confirm('Удалить образец? Добавленные в доверенность формулировки останутся.')) return; mk.sources.splice(Number(b.dataset.mkDel), 1); mkLib = null; saveMk(); mkRenderSources(); mkRenderLib(); return; }
+    if (b.dataset.mkFields) {
+      const f = mk.sources[Number(b.dataset.mkFields)].fields || {};
+      if (Object.keys(f).some(k => mk.fields[k] && mk.fields[k] !== f[k]) && !confirm('Заменить заполненные поля преамбулы, срока и подписи данными образца?')) return;
+      Object.assign(mk.fields, f); saveMk(); mkRenderFields(); $('#mkFieldsBox').open = true; if (mkShowText) mkRenderText(); toast('Поля заполнены по образцу: проверьте их'); return;
+    }
+    if (b.dataset.mkAll) {
+      const src = mk.sources[Number(b.dataset.mkAll)]; let n = 0;
+      for (const bl of src.blocks) for (const s of bl.sections) for (const it of s.items) if (!mkHas(it.text, mkBlockKey(bl.title))) { mkAdd(mkBlockKey(bl.title), bl.title, s.heading ? headNorm(s.heading) : '', s.heading, it.text); n++; }
+      mkRenderLib(); mkRenderDraft(); toast(`Добавлено формулировок: ${n}`);
+    }
+  });
+  $('#mkSearch').addEventListener('input', debounce(mkRenderLib, 200));
+  $('#mkLib').addEventListener('click', e => {
+    const b = e.target.closest('[data-mk-add]'); if (!b) return;
+    const [bi, si, ci, vi] = b.dataset.mkAdd.split(':').map(Number);
+    const B = mkLib[bi], S = B.secs[si], v = S.clusters[ci].variants[vi];
+    const other = S.clusters[ci].variants.map(x => mkHas(x.text, B.key)).find(Boolean);
+    if (other && !confirm('Другой вариант этой формулировки уже в доверенности. Добавить и этот?')) return;
+    mkAdd(B.key, B.title, S.key, S.heading, v.text);
+    mkRenderLib(); mkRenderDraft();
+  });
+  $('#mkFields').addEventListener('input', e => {
+    const k = e.target.dataset.mkf; if (k) { mk.fields[k] = e.target.value; saveMk(); if (mkShowText) mkRenderText(); }
+    if (e.target.id === 'mkPd') { mk.pdBlank = e.target.checked; saveMk(); if (mkShowText) mkRenderText(); }
+  });
+  $('#mkFields').addEventListener('change', e => { if (e.target.id === 'mkPd') { mk.pdBlank = e.target.checked; saveMk(); if (mkShowText) mkRenderText(); } });
+  $('#mkFields').addEventListener('click', e => {
+    if (e.target.id !== 'btnMkFillPoa') return;
+    const p = getPoa($('#mkFillPoa').value); if (!p) return;
+    Object.assign(mk.fields, mkFieldsFromPoa(p)); saveMk(); mkRenderFields(); toast('Реквизиты доверителя, представитель, предмет и отмена взяты из основной доверенности; проверьте подписанта и основание');
+  });
+  $('#mkDraft').addEventListener('input', e => {
+    const t = e.target;
+    if (t.dataset.mkBtitle) { const B = mk.blocks.find(x => x.id === t.dataset.mkBtitle); if (B) { B.title = t.value; } }
+    else if (t.dataset.mkShead) { const { S } = mkLoc(t.dataset.mkShead); if (S) S.heading = t.value; }
+    else if (t.dataset.mkItext) { const { I } = mkLoc(t.dataset.mkItext); if (I) I.text = t.value; }
+    else return;
+    if (t.tagName === 'TEXTAREA') { t.style.height = 'auto'; t.style.height = (t.scrollHeight + 2) + 'px'; }
+    saveMk(); if (mkShowText) mkRenderText();
+  });
+  $('#mkDraft').addEventListener('change', () => { mkRenderLib(); });
+  $('#mkDraft').addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return; const d = b.dataset;
+    if (b.id === 'btnMkBlockAdd') { const B = { id: 'mb' + uid(), key: 'u:' + uid(), title: '', sections: [] }; mk.blocks.push(B); const S = mkFindSection(B, '', '', true); mk.active = { b: B.id, s: S.id }; }
+    else if (b.id === 'btnMkGenAdd') { const B = mkFindBlock('', '', true); const S = mkFindSection(B, '', '', true); mk.active = { b: B.id, s: S.id }; }
+    else if (d.mkBup || d.mkBdown) { const B = mk.blocks.find(x => x.id === (d.mkBup || d.mkBdown)); mkMove(mk.blocks, B, d.mkBup ? -1 : 1); }
+    else if (d.mkBdel) { const B = mk.blocks.find(x => x.id === d.mkBdel); if (B && (B.sections.every(s => !s.items.length) || confirm('Удалить блок со всеми пунктами?'))) mk.blocks = mk.blocks.filter(x => x !== B); }
+    else if (d.mkSadd) { const B = mk.blocks.find(x => x.id === d.mkSadd); const S = { id: 'ms' + uid(), key: 'u:' + uid(), heading: '', items: [] }; B.sections.push(S); mk.active = { b: B.id, s: S.id }; }
+    else if (d.mkSact) { const [bb, ss] = d.mkSact.split(':'); mk.active = { b: bb, s: ss }; }
+    else if (d.mkSup || d.mkSdown) { const { B, S } = mkLoc(d.mkSup || d.mkSdown); mkMove(B.sections, S, d.mkSup ? -1 : 1); }
+    else if (d.mkSdel) { const { B, S } = mkLoc(d.mkSdel); if (S && (!S.items.length || confirm('Удалить раздел со всеми пунктами?'))) B.sections = B.sections.filter(x => x !== S); }
+    else if (d.mkIadd) { const { B, S } = mkLoc(d.mkIadd); S.items.push({ id: 'mi' + uid(), text: '' }); mk.active = { b: B.id, s: S.id }; }
+    else if (d.mkIup || d.mkIdown) { const { S, I } = mkLoc(d.mkIup || d.mkIdown); mkMove(S.items, I, d.mkIup ? -1 : 1); }
+    else if (d.mkIdel) { const { S, I } = mkLoc(d.mkIdel); S.items = S.items.filter(x => x !== I); }
+    else return;
+    saveMk(); mkRenderDraft(); mkRenderLib();
+  });
+  $('#btnMkClear').addEventListener('click', () => { if (!mkCount() || confirm('Очистить собранную доверенность? Образцы и поля преамбулы останутся.')) { mk.blocks = []; mk.active = null; saveMk(); mkRenderDraft(); mkRenderLib(); } });
+  $('#mkBlank').addEventListener('change', e => { mk.blankId = e.target.value; saveMk(); if (mkShowText) mkRenderText(); });
+  $('#btnMkDocx').addEventListener('click', mkDownload);
+  $('#btnMkText').addEventListener('click', () => { mkShowText = !mkShowText; $('#mkText').hidden = !mkShowText; $('#btnMkText').classList.toggle('primary', mkShowText); if (mkShowText) { mkRenderText(); $('#mkText').scrollIntoView({ block: 'start', behavior: 'smooth' }); } });
+  $('#mkText').addEventListener('click', async e => {
+    if (e.target.id !== 'btnMkTextCopy') return;
+    const t = mkDoc().map(p => p.kind === 'signature' ? p.left + '\t\t\t' + p.right : p.runs.map(r => r.t).join('')).join('\n');
+    try { await navigator.clipboard.writeText(t); toast('Текст скопирован'); } catch (err) { toast('Не удалось скопировать'); }
+  });
+  $('#btnMkCmp').addEventListener('click', () => { if (!mkCount()) { toast('В доверенности нет ни одного полномочия'); return; } mkCompare($('#mkCmpPoa').value); });
+  $('#mkReport').addEventListener('click', e => { if (e.target.id === 'btnMkRepClose') $('#mkReport').hidden = true; });
+  $('#btnMkSave').addEventListener('click', () => {
+    const box = $('#mkSaveBox'); box.hidden = !box.hidden; if (box.hidden) return;
+    const sv = mk.save || {}; const f = mk.fields;
+    const sub = (f.subPhrase || '').match(/передоверия\s+(.+?)\.?$/i);
+    $('#mkSvName').value = sv.name || ''; $('#mkSvNumber').value = sv.number || ''; $('#mkSvDate').value = sv.date || ''; $('#mkSvValid').value = sv.validUntil || '';
+    $('#mkSvTitle').value = sv.signerTitle || ''; $('#mkSvShort').value = sv.signerShort || ''; $('#mkSvSub').value = sv.subDelegation || (sub ? sub[1] : '');
+    box.scrollIntoView({ block: 'nearest' });
+  });
+  $('#btnMkSaveOk').addEventListener('click', mkSaveToConstructor);
+}
+
+/* ======================================================================
    Прочее: диалоги, зум, переключение видов
    ====================================================================== */
 function currentZoom() { const m = ($('#pagesScaler').style.transform || '').match(/scale\(([\d.]+)\)/); return m ? Number(m[1]) : 1; }
@@ -4376,7 +4967,7 @@ function bindMisc() {
    ====================================================================== */
 function init() {
   migrateOldBlank(); renderVersion(); applyTheme();
-  bindForm(); bindPowers(); bindDrafts(); bindPoas(); bindMisc(); bindTheme(); bindImport(); bindHelp(); bindCheck();
+  bindForm(); bindPowers(); bindDrafts(); bindPoas(); bindMisc(); bindTheme(); bindImport(); bindHelp(); bindCheck(); bindMk();
   renderPoaSelect(); renderPoaCard(); fillForm(); renderPowers(); renderChecks(); applyDocFont();
   renderPreview();
 }
