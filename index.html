@@ -909,6 +909,10 @@ body.pv-pdf[data-step="2"] #previewScroll, body.pv-pdf[data-step="2"] .preview-h
 .list li.hid .t { color: var(--muted); }
 .poa-pdf .ck-link { margin-left: 6px; }
 .ck-link.danger { color: var(--danger); }
+/* 3.7: выбор и добавление бланка на шаге 1 */
+.blank-row { display: flex; gap: 8px; align-items: center; }
+.blank-row select { flex: 1; min-width: 0; }
+.blank-row .btn { flex: none; min-height: 42px; }
 
 </style>
 <script>
@@ -1035,9 +1039,10 @@ try { var t = (JSON.parse(localStorage.getItem('dovk_ui_v1') || '{}') || {}).the
       <fieldset class="fs" data-step="1">
         <legend>Бланк</legend>
         <div class="field">
-          <label for="blankSelect">Бланк для этой основной доверенности</label>
-          <select id="blankSelect"></select>
-          <div class="hint">Выбор запоминается для этой основной доверенности. Свои бланки Word добавляются в разделе «Доверенности и бланки».</div>
+          <label for="blankSelect">На каком бланке оформляется проект</label>
+          <div class="blank-row"><select id="blankSelect"></select><button type="button" class="btn" data-pick="blankFile2">Добавить свой бланк</button></div>
+          <input type="file" id="blankFile2" accept=".docx,.png,.jpg,.jpeg" hidden>
+          <div class="hint">Обычно это бланк доверителя. Если основная доверенность выдана юридическому лицу, передоверие оформляется на бланке этого юридического лица: добавьте его бланк (файл Word с шапкой или картинку шапки PNG, JPG). Выбор запоминается для этой основной доверенности.</div>
         </div>
       </fieldset>
 
@@ -1080,7 +1085,7 @@ try { var t = (JSON.parse(localStorage.getItem('dovk_ui_v1') || '{}') || {}).the
           <div class="ready-head" id="readyHead"></div>
           <ul class="checks" id="checks"></ul>
           <ul class="checks static">
-            <li class="ok"><span class="ck-ic" aria-hidden="true"></span><div><div class="ct">Нотариальное удостоверение не требуется</div><div class="cs">передоверие совершает руководитель филиала (п. 3 ст. 187 ГК РФ)</div></div></li>
+            <li class="ok"><span class="ck-ic" aria-hidden="true"></span><div><div class="ct">Нотариальное удостоверение не требуется</div><div class="cs">передоверие совершает руководитель филиала или юридическое лицо (п. 3 ст. 187 ГК РФ)</div></div></li>
             <li class="info"><span class="ck-ic" aria-hidden="true"></span><div><div class="ct">Последующее передоверие не допускается (п. 7 ст. 187 ГК РФ)</div><div class="cs">фразу «без права передоверия» можно добавить в оформлении ниже</div></div></li>
             <li class="info"><span class="ck-ic" aria-hidden="true"></span><div><div class="ct">После выдачи известите доверителя о передоверии</div><div class="cs">в разумный срок (п. 2 ст. 187 ГК РФ)</div></div></li>
           </ul>
@@ -1283,8 +1288,8 @@ try { var t = (JSON.parse(localStorage.getItem('dovk_ui_v1') || '{}') || {}).the
     <h3 class="sub-h">Бланки Word</h3>
     <ul class="list" id="blankList"></ul>
     <div class="row tight">
-      <button type="button" class="btn small primary" data-pick="blankFile">Добавить бланк (.docx)</button>
-      <input type="file" id="blankFile" accept=".docx" hidden>
+      <button type="button" class="btn small primary" data-pick="blankFile">Добавить бланк (Word или картинка шапки)</button>
+      <input type="file" id="blankFile" accept=".docx,.png,.jpg,.jpeg" hidden>
     </div>
     <p class="small-note">Бланк Word организации-доверителя: шапка в верхнем колонтитуле первой страницы, строки даты и номера остаются пустыми для исполнителя. Из бланка берутся поля страницы и колонтитулы, текст проекта подставляется в тело документа. Для каждой основной доверенности бланк выбирается на шаге 1 или при ее добавлении. Шапка показывается в предпросмотре, если она в бланке картинкой.</p>
   </div>
@@ -1590,7 +1595,7 @@ try { var t = (JSON.parse(localStorage.getItem('dovk_ui_v1') || '{}') || {}).the
     <ul>
       <li>Панель готовности показывает, готов ли проект: основная доверенность, представители, срок, число полномочий, ошибки (красным) и замечания (желтым). Пока есть ошибки, кнопка скачивания недоступна.</li>
       <li>Измененные формулировки перечислены с пословной разницей. «Открыть пункт» возвращает на шаг 2 к этому пункту, «Все проверено» убирает замечание, пока правки снова не изменятся.</li>
-      <li>Проверяется: срок не позже срока основной доверенности (п. 4 ст. 187 ГК РФ); указаны ФИО и должность каждого представителя; выбрано хотя бы одно полномочие; нет пустых своих пунктов. Передоверие допускается только тем, кому это разрешено основной доверенностью. Нотариальное удостоверение не требуется: передоверие совершает руководитель филиала (п. 3 ст. 187 ГК РФ). Последующее передоверие по умолчанию не допускается (п. 7 ст. 187 ГК РФ). О передоверии нужно известить доверителя в разумный срок (п. 2 ст. 187 ГК РФ).</li>
+      <li>Проверяется: срок не позже срока основной доверенности (п. 4 ст. 187 ГК РФ); указаны ФИО и должность каждого представителя; выбрано хотя бы одно полномочие; нет пустых своих пунктов. Передоверие допускается только тем, кому это разрешено основной доверенностью. Нотариальное удостоверение не требуется: передоверие совершает руководитель филиала или юридическое лицо (п. 3 ст. 187 ГК РФ). Последующее передоверие по умолчанию не допускается (п. 7 ст. 187 ГК РФ). О передоверии нужно известить доверителя в разумный срок (п. 2 ст. 187 ГК РФ).</li>
       <li>«Оформление»: шрифт, размер, интервал, отступы. «Дополнительно»: место для паспортных данных, жирность, номера страниц, неразрывные пробелы, фраза «без права передоверия».</li>
       <li>«Скачать проект на бланке (DOCX)». Если есть измененные или свои пункты, сначала открывается сводка всех изменений для проверки. Заголовок раздела не остается последней строкой страницы, а фраза о сроке не отрывается от подписи; в Word это же правило задано в свойствах абзацев.</li>
       <li>«Печать / PDF» печатает только лист проекта, «Скопировать текст» кладет текст в буфер обмена, «Сохранить черновик» сохраняет форму под названием. «Начать новый проект» очищает представителей, выбор и правки (оформление остается) и возвращает на стартовый экран.</li>
@@ -1665,7 +1670,8 @@ try { var t = (JSON.parse(localStorage.getItem('dovk_ui_v1') || '{}') || {}).the
     <h3>Бланки Word</h3>
     <ul>
       <li>Доверенности могут выдаваться от разных организаций, поэтому бланков может быть несколько. Для каждой основной доверенности (то есть для каждого доверителя) бланк выбирается на шаге 1, поле «Бланк». Выбор запоминается, при смене основной доверенности бланк переключается сам.</li>
-      <li>Свой бланк добавляется в «Доверенностях и бланках», кнопка «Добавить бланк (.docx)»: файл Word организации с шапкой в верхнем колонтитуле первой страницы. Из бланка берутся поля страницы и колонтитулы, текст проекта подставляется в тело документа. Бланк можно переименовать (например, по названию организации) или удалить.</li>
+      <li>Свой бланк добавляется кнопкой «Добавить свой бланк» прямо на шаге 1 (он сразу выбирается для этой основной доверенности) или в «Доверенностях и бланках». Подходит файл Word с шапкой в верхнем колонтитуле первой страницы: из него берутся поля страницы и колонтитулы, текст проекта подставляется в тело документа. Подходит и картинка шапки (PNG, JPG, например скан или снимок шапки бланка): конструктор сам соберет из нее бланк Word, шапка по ширине текста, текст начинается под ней. Бланк можно переименовать или удалить.</li>
+      <li><b>Основная доверенность выдана юридическому лицу</b> (например, обществу, которое оказывает услуги по договору): проект передоверия оформляется от имени этого юридического лица и на его бланке. При добавлении такой доверенности из PDF конструктор сам указывает в преамбуле юридическое лицо, действующее от имени доверителя на основании этой доверенности; подписанта и бланк этого юридического лица нужно указать самим.</li>
       <li>Всегда доступны встроенный бланк и «Чистый лист A4 с заголовком «ДОВЕРЕННОСТЬ»» со строками для даты и номера, если своего бланка нет.</li>
       <li>Дату и номер в шапке исполнитель заполняет при оформлении. Шапка показывается в предпросмотре, если в бланке она сделана картинкой; в DOCX она есть в любом случае.</li>
     </ul>
@@ -7142,20 +7148,22 @@ function openPoaEditor(p, asCopy, guess, rec) {
   editingPoaId = (base && !asCopy) ? base.id : null;
   $('#poaEditTitle').textContent = guess ? 'Новая основная доверенность из PDF' : editingPoaId ? 'Изменение основной доверенности' : (asCopy ? 'Копия основной доверенности' : 'Новая основная доверенность');
   for (const f of PE_FIELDS) { $('#pe_' + f).value = (asCopy && f === 'name') ? (tpl.name + ' (копия)') : (tpl[f] || ''); $('#pe_' + f).classList.toggle('guessed', !!(guess && guess.guessed.includes(f))); }
-  const missing = guess ? ['date', 'number', 'validUntil', 'signerGen', 'scope'].filter(f => !tpl[f]) : [];
+  const missing = guess ? ['date', 'number', 'validUntil', 'signerGen', 'signerTitle', 'signerShort', 'scope'].filter(f => !tpl[f]) : [];
+  ['signerGen', 'signerTitle', 'signerShort', 'scope'].forEach(f => { if (!missing.includes(f)) $('#pe_' + f).classList.remove('need'); });
   missing.forEach(f => $('#pe_' + f).classList.add('need'));
   ['date', 'number', 'validUntil'].forEach(f => { if (!missing.includes(f)) $('#pe_' + f).classList.remove('need'); });
   $('#peGuessNote').hidden = !guess;
-  if (guess) $('#peGuessNote').innerHTML = `Поля заполнены по тексту PDF. Желтым подсвечено найденное в PDF: проверьте окончания и реквизиты. ${missing.length ? `<b>Впишите сами</b> (в PDF не прочиталось): ${missing.map(f => ({ date: 'дата выдачи', number: 'номер', validUntil: 'срок', signerGen: 'подписант', scope: 'абзац о предмете' })[f]).join(', ')}. Дату и номер в шапке обычно вписывают от руки, распознавание их не читает.` : ''}`;
+  if (guess) $('#peGuessNote').innerHTML = `Поля заполнены по тексту PDF. Желтым подсвечено найденное в PDF: проверьте окончания и реквизиты. ${missing.length ? `<b>Впишите сами</b> (в PDF не прочиталось): ${missing.map(f => ({ date: 'дата выдачи', number: 'номер', validUntil: 'срок', signerGen: 'подписант («в лице ...»)', signerTitle: 'должность в подписи', signerShort: 'инициалы и фамилия в подписи', scope: 'абзац о предмете' })[f]).join(', ')}. Дату и номер в шапке обычно вписывают от руки, распознавание их не читает.` : ''}${guess.entity ? `<br><b>Основная доверенность выдана юридическому лицу (${esc(guess.entity.short)}).</b> Проекты передоверия оформляются от его имени: в преамбуле оно указано как действующее от имени ${esc(guess.entity.pShort)} на основании этой доверенности. Впишите, кто подписывает от его имени («в лице ...», должность, инициалы), и выберите его бланк (если бланка нет, добавьте его в «Доверенностях и бланках» или на шаге 1).` : ''}`;
   $('#pe_text').value = guess ? (tpl.markup || '') : structToMarkup(tpl.blocks || []);
   $('#dlgPoaEdit').dataset.oldBlocks = JSON.stringify(tpl.blocks || []);
   $('#dlgPoaEdit').dataset.extra = JSON.stringify({ unitDefault: tpl.unitDefault || '' });
   $('#dlgPoaEdit').dataset.oldMap = JSON.stringify(base && !asCopy && base.pdfMap ? base.pdfMap : null);
-  $('#dlgPoaEdit').dataset.auto = JSON.stringify(guess ? { agentShort: guess.agentShort || '', name: tpl.name, basis: tpl.basis || '' } : {});
+  $('#dlgPoaEdit').dataset.auto = JSON.stringify(guess ? { agentShort: guess.agentShort || '', name: tpl.name, basis: tpl.basis || '', principal: tpl.principal || '', principalTpl: guess.principalTpl || '' } : {});
   pe.years = guess ? guess.termYears || null : null;
   // 3.6: бланк новой доверенности из PDF как у доверенности того же доверителя
   const same = guess && allPoasAll().find(x => normText(x.principalBold) === normText(guess.principalBold || '-'));
-  fillBlankOptions($('#pe_blank'), base ? blankIdFor(base.id) : same ? blankIdFor(same.id) : 'plain');
+  const ent = guess && guess.entity && blankList().find(b => !b.fixed && normText(b.name).includes(normText((guess.entity.short.match(/«([^»]+)»/) || [])[1] || guess.entity.short)));
+  fillBlankOptions($('#pe_blank'), base ? blankIdFor(base.id) : ent ? ent.id : same ? blankIdFor(same.id) : 'plain');
   peStats();
   peReset();
   $('#dlgPoaEdit').showModal();
@@ -7259,8 +7267,9 @@ function bindPoas() {
 /* ПРАВИЛО ДОРАБОТКИ: при каждом изменении конструктора повышается APP_VERSION, в APP_CHANGES добавляется строка,
    а в APP_FEATURES дописывается или правится возможность с номером версии, с которой она есть.
    Вкладки «Возможности ПО» и «Версии» в справке строятся из этих перечней. */
-const APP_VERSION = '3.6';
+const APP_VERSION = '3.7';
 const APP_CHANGES = [
+  ['3.7', '26.10.2026', 'на шаге 1 кнопка «Добавить свой бланк»: бланк сразу выбирается для этой основной доверенности; бланк можно сделать из картинки шапки (PNG, JPG), конструктор соберет из нее бланк Word; основная доверенность, выданная юридическому лицу, при добавлении из PDF оформляет проекты передоверия от имени этого юридического лица (в преамбуле он действует от имени доверителя на основании доверенности); абзац о предмете находится и внутри преамбулы'],
   ['3.6', '26.10.2026', 'новая основная доверенность добавляется из PDF: поля, срок и полномочия заполняются по тексту, разметка сразу сверяется с PDF (найденное закрашено, потерянное и лишнее перечислено), PDF привязывается к доверенности; в экспорт входит разметка для скана без текста PDF; встроенную доверенность можно скрыть из списков, PDF у каждой доверенности можно выбрать, заменить или удалить, вместе с доверенностью удаляется и ее PDF; при чтении PDF восстанавливаются слова, разорванные переносом по дефису'],
   ['3.5', '26.10.2026', 'в проверке проекта в положении «Все пункты в PDF» страницы PDF занимают не меньше половины высоты правой панели: блок сравнения абзаца и панель «PDF с пометками» над ними сжимаются и прокручиваются отдельно; раньше при длинном сравнении PDF почти не было видно и его нельзя было прокрутить'],
   ['3.4', '26.10.2026', 'в проверке проекта над основной доверенностью один переключатель на три положения: «Все пункты», «Пункты, вошедшие в проект», «Все пункты в PDF»; раньше фильтр «Только переданные» был отдельной кнопкой и не снимался нажатием на «Пункты»'],
@@ -7351,6 +7360,11 @@ const APP_FEATURES = [
     ['PDF с пометками: пункты основной доверенности, вошедшие в проект, выделяются в PDF основной доверенности цветом по статусу; в примечании к выделению номер абзаца проекта, итог сравнения и текст абзаца; открыть или скачать новый файл, исходный не меняется', '3.1'],
     ['Пункты находятся в PDF по текстовому слою, в том числе в скане, положенном «боком», и с ошибками распознавания; для встроенной доверенности пометки ставятся и в скане без текстового слоя (по разметке, сделанной при встраивании)', '3.1'],
     ['PDF основной доверенности запоминается в этом браузере отдельно для каждой основной доверенности; его можно заменить или забыть. Модуль записи PDF (pdf-lib) встроен в файл и работает без интернета', '3.1'],
+  ]],
+  ['Бланки', [
+    ['«Добавить свой бланк» прямо на шаге 1: бланк сразу выбирается для этой основной доверенности', '3.7'],
+    ['Бланк из картинки шапки (PNG, JPG): конструктор собирает бланк Word, шапка по ширине текста, текст начинается под ней', '3.7'],
+    ['Основная доверенность, выданная юридическому лицу: проекты передоверия от его имени и на его бланке; при добавлении из PDF преамбула («... действующее от имени доверителя на основании доверенности от ... № ...») заполняется сама, подписант вписывается вручную', '3.7'],
   ]],
   ['PDF основной доверенности на шаге 2', [
     ['Переключатель «Проект / PDF основной» над документом: справа страницы самой основной доверенности, выбранные полномочия закрашены (зеленым без правок, синим суженные, желтым с добавлениями или снятым ограничением)', '3.3'],
@@ -7838,17 +7852,22 @@ async function makePlainBlank() {
   g.textAlign = 'left'; g.fillText('«____» ________________ 20____ г.', 0, pt(48));
   g.textAlign = 'right'; g.fillText('№ ______________', cv.width, pt(48));
   const png = await new Promise(res => cv.toBlob(b => b.arrayBuffer().then(x => res(new Uint8Array(x))), 'image/png'));
-  const R = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships', E = 36000, cx = wMm * E, cy = hMm * E;
-  const hdr = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:hdr xmlns:w="${W_NS}" xmlns:r="${R}" xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture"><w:p><w:pPr><w:spacing w:before="0" w:after="0"/><w:ind w:firstLine="0"/></w:pPr><w:r><w:drawing><wp:inline distT="0" distB="0" distL="0" distR="0"><wp:extent cx="${cx}" cy="${cy}"/><wp:effectExtent l="0" t="0" r="0" b="0"/><wp:docPr id="1" name="Заголовок"/><wp:cNvGraphicFramePr><a:graphicFrameLocks noChangeAspect="1"/></wp:cNvGraphicFramePr><a:graphic><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:pic><pic:nvPicPr><pic:cNvPr id="1" name="header.png"/><pic:cNvPicPr/></pic:nvPicPr><pic:blipFill><a:blip r:embed="rIdImg1"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill><pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="${cx}" cy="${cy}"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr></pic:pic></a:graphicData></a:graphic></wp:inline></w:drawing></w:r></w:p></w:hdr>`;
+  return makeImageBlank(png, 'png', wMm, hMm);
+}
+/* 3.7: бланк Word из картинки шапки: картинка в верхнем колонтитуле первой страницы, текст начинается под ней */
+async function makeImageBlank(img, ext, wMm, hMm, fitTop) {
+  const topTw = fitTop ? Math.max(1134, Math.round((10 + hMm + 6) * TW)) : 1134;   // свой бланк: колонтитул 10 мм + шапка + 6 мм до текста
+  const R = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships', E = 36000, cx = Math.round(wMm * E), cy = Math.round(hMm * E);
+  const hdr = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:hdr xmlns:w="${W_NS}" xmlns:r="${R}" xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture"><w:p><w:pPr><w:spacing w:before="0" w:after="0"/><w:ind w:firstLine="0"/></w:pPr><w:r><w:drawing><wp:inline distT="0" distB="0" distL="0" distR="0"><wp:extent cx="${cx}" cy="${cy}"/><wp:effectExtent l="0" t="0" r="0" b="0"/><wp:docPr id="1" name="Заголовок"/><wp:cNvGraphicFramePr><a:graphicFrameLocks noChangeAspect="1"/></wp:cNvGraphicFramePr><a:graphic><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:pic><pic:nvPicPr><pic:cNvPr id="1" name="header.${ext}"/><pic:cNvPicPr/></pic:nvPicPr><pic:blipFill><a:blip r:embed="rIdImg1"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill><pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="${cx}" cy="${cy}"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr></pic:pic></a:graphicData></a:graphic></wp:inline></w:drawing></w:r></w:p></w:hdr>`;
   const z = new JSZip();
-  z.file('[Content_Types].xml', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Default Extension="png" ContentType="image/png"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/><Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/><Override PartName="/word/header1.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.header+xml"/></Types>');
+  z.file('[Content_Types].xml', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Default Extension="${ext}" ContentType="image/${ext}"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/><Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/><Override PartName="/word/header1.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.header+xml"/></Types>`);
   z.file('_rels/.rels', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>');
   z.file('word/_rels/document.xml.rels', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="${R}/styles" Target="styles.xml"/><Relationship Id="rIdHdrFirst" Type="${R}/header" Target="header1.xml"/></Relationships>`);
-  z.file('word/_rels/header1.xml.rels', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rIdImg1" Type="${R}/image" Target="media/header.png"/></Relationships>`);
+  z.file('word/_rels/header1.xml.rels', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rIdImg1" Type="${R}/image" Target="media/header.${ext}"/></Relationships>`);
   z.file('word/header1.xml', hdr);
   z.file('word/styles.xml', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:styles xmlns:w="${W_NS}"><w:docDefaults><w:rPrDefault><w:rPr><w:rFonts w:ascii="Times New Roman" w:hAnsi="Times New Roman" w:cs="Times New Roman" w:eastAsia="Times New Roman"/><w:sz w:val="24"/><w:szCs w:val="24"/><w:lang w:val="ru-RU"/></w:rPr></w:rPrDefault><w:pPrDefault><w:pPr><w:spacing w:after="0" w:line="240" w:lineRule="auto"/></w:pPr></w:pPrDefault></w:docDefaults></w:styles>`);
-  z.file('word/document.xml', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document xmlns:w="${W_NS}" xmlns:r="${R}"><w:body><w:p/><w:sectPr><w:headerReference w:type="first" r:id="rIdHdrFirst"/><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="1134" w:right="851" w:bottom="1134" w:left="1701" w:header="567" w:footer="567" w:gutter="0"/><w:cols w:space="708"/><w:titlePg/></w:sectPr></w:body></w:document>`);
-  z.file('word/media/header.png', png);
+  z.file('word/document.xml', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document xmlns:w="${W_NS}" xmlns:r="${R}"><w:body><w:p/><w:sectPr><w:headerReference w:type="first" r:id="rIdHdrFirst"/><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="${topTw}" w:right="851" w:bottom="1134" w:left="1701" w:header="567" w:footer="567" w:gutter="0"/><w:cols w:space="708"/><w:titlePg/></w:sectPr></w:body></w:document>`);
+  z.file(`word/media/header.${ext}`, img);
   return z.generateAsync({ type: 'base64', compression: 'DEFLATE' });
 }
 function fillBlankOptions(sel, value) {
@@ -7866,26 +7885,41 @@ function renderBlankList() {
       <div class="tools">${b.fixed ? '' : `<button type="button" class="btn small" data-bl-rename="${esc(b.id)}">Переименовать</button><button type="button" class="btn small danger" data-bl-del="${esc(b.id)}">Удалить</button>`}</div></li>`;
   }).join('');
 }
+/* 3.7: добавить бланк: Word .docx или картинка шапки (PNG, JPG), из которой собирается бланк Word.
+   С шага 1 бланк сразу назначается текущей основной доверенности */
+async function addBlankFile(f, assign) {
+  try {
+    let b64, name = f.name.replace(/\.(docx|png|jpe?g)$/i, '');
+    if (/\.docx$/i.test(f.name)) {
+      const buf = await f.arrayBuffer();
+      const zip = await JSZip.loadAsync(buf); if (!zip.file('word/document.xml')) throw new Error('это не документ Word .docx');
+      const u8 = new Uint8Array(buf); let bin = ''; for (let i = 0; i < u8.length; i += 0x8000) bin += String.fromCharCode.apply(null, u8.subarray(i, i + 0x8000));
+      b64 = btoa(bin);
+    } else if (/\.(png|jpe?g)$/i.test(f.name)) {
+      const buf = new Uint8Array(await f.arrayBuffer());
+      const url = URL.createObjectURL(f);
+      const im = await new Promise((res, rej) => { const x = new Image(); x.onload = () => res(x); x.onerror = () => rej(new Error('картинка не читается')); x.src = url; });
+      URL.revokeObjectURL(url);
+      const wMm = 165, hMm = Math.min(80, Math.round(wMm * im.naturalHeight / im.naturalWidth * 10) / 10);
+      b64 = await makeImageBlank(buf, /\.png$/i.test(f.name) ? 'png' : 'jpeg', wMm, hMm, true);
+    } else throw new Error('нужен файл Word .docx или картинка шапки PNG, JPG');
+    const nm = prompt('Название бланка (например, по организации, на чьем бланке оформляется доверенность):', name); if (nm === null) return;
+    const id = 'bl-' + uid(); blanks.push({ id, name: nm.trim() || name, b64 });
+    if (!lsSet(LS.blanks, blanks)) { blanks.pop(); return; }
+    const poa = curPoa();
+    if (poa && (assign || confirm(`Бланк «${nm.trim() || name}» добавлен. Назначить его основной доверенности «${poa.name}»?`))) { poaBlank[poa.id] = id; lsSet(LS.poaBlank, poaBlank); await applyBlankFor(poa.id); renderPreview(); }
+    renderBlankInfo(); renderPoaList();
+    toast(assign && poa ? `Бланк «${nm.trim() || name}» добавлен и выбран для этой основной доверенности` : 'Бланк добавлен');
+  } catch (err) { toast('Бланк не добавлен: ' + err.message); }
+}
 function bindBlanks() {
   $('#blankSelect').addEventListener('change', async e => {
     poaBlank[state.poaId] = e.target.value; lsSet(LS.poaBlank, poaBlank);
     await applyBlankFor(state.poaId); renderPreview();
     const b = blankList().find(x => x.id === e.target.value); toast(`Для этой основной доверенности выбран бланк: ${b ? b.name : ''}`);
   });
-  $('#blankFile').addEventListener('change', async e => {
-    const f = e.target.files[0]; if (!f) return; e.target.value = '';
-    try {
-      const buf = await f.arrayBuffer();
-      const zip = await JSZip.loadAsync(buf); if (!zip.file('word/document.xml')) throw new Error('это не документ Word .docx');
-      const u8 = new Uint8Array(buf); let bin = ''; for (let i = 0; i < u8.length; i += 0x8000) bin += String.fromCharCode.apply(null, u8.subarray(i, i + 0x8000));
-      const id = 'bl-' + uid(); const name = f.name.replace(/\.docx$/i, '');
-      blanks.push({ id, name, b64: btoa(bin) });
-      if (!lsSet(LS.blanks, blanks)) { blanks.pop(); return; }
-      const poa = curPoa();
-      if (poa && confirm(`Бланк «${name}» добавлен. Назначить его основной доверенности «${poa.name}»?`)) { poaBlank[poa.id] = id; lsSet(LS.poaBlank, poaBlank); await applyBlankFor(poa.id); renderPreview(); }
-      renderBlankInfo(); renderPoaList();
-    } catch (err) { toast('Бланк не добавлен: ' + err.message); }
-  });
+  $('#blankFile').addEventListener('change', async e => { const f = e.target.files[0]; e.target.value = ''; if (f) addBlankFile(f, false); });
+  $('#blankFile2').addEventListener('change', async e => { const f = e.target.files[0]; e.target.value = ''; if (f) addBlankFile(f, true); });   // 3.7: с шага 1
   $('#blankList').addEventListener('click', async e => {
     const b = e.target.closest('button'); if (!b) return;
     if (b.dataset.blRename) {
@@ -9503,7 +9537,22 @@ function poaGuessFromPdf(paras, fileName) {
     if (k > 0) { set('principalBold', head.slice(0, k)); set('principal', head.slice(k).replace(/[,\s]+$/, '')); } else set('principalBold', head);
     // кому выдана основная доверенность: он подписывает проекты передоверия
     const m = pre.match(/уполномочивает(?:\s*\([^)]*\))?\s*:?\s+(.+?)(?:\s*\(\s*паспорт|\s*\(_{2,}|,\s*представлять\s+интересы|\s*$)/i);
-    if (m) {
+    if (m && /^(Акционерн\S*\s+обществ|Обществ\S*\s+с\s+ограниченн|Публичн\S*\s+акционерн|Непубличн\S*|Государственн\S*|Федеральн\S*|Автономн\S*|Некоммерческ\S*|(ООО|АО|ПАО|НАО|ОАО|ЗАО|ФГУП|ГУП|МУП)\s+«)/i.test(m[1].trim())) {
+      // 3.7: основная доверенность выдана юридическому лицу: проекты передоверия оформляются от его имени
+      // и на его бланке; подписанта (кто действует от его имени) впишут вручную
+      const agent = m[1].replace(/[,\s(]+$/, '').trim();
+      const cut = agent.search(/\s*[(,]/);
+      const ename = cut > 0 ? agent.slice(0, cut).trim() : agent, details = cut > 0 ? agent.slice(cut).replace(/^[\s,]+/, '').replace(/[,\s]+$/, '') : '';
+      const short = (details.match(/^\(([^)]*«[^)]*)\)/) || [])[1] || ename;
+      const pShort = ((g.principal || '').match(/^\(([^)]+)\)/) || [])[1] || g.principalBold || '';
+      g.entity = { name: ename, short, pShort };
+      set('principalBold', ename);
+      g.principalTpl = `${details ? details + ', ' : ''}действующее от имени ${pShort} на основании {ОСНОВАНИЕ}`;
+      set('principal', g.principalTpl.replace('{ОСНОВАНИЕ}', 'доверенности от ____ № ____'));
+      g.basis = 'Устава'; g.guessed.push('basis');
+      g.signerGen = ''; g.signerTitle = ''; g.signerShort = '';
+      g.agentShort = short;
+    } else if (m) {
       const agent = m[1].replace(/[,\s(]+$/, '');
       const fio = agent.match(/([А-ЯЁ][а-яё]+(?:-[А-ЯЁ][а-яё]+)?)\s+([А-ЯЁ][а-яё]+)\s+([А-ЯЁ][а-яё]+)$/);
       const fem = fio ? /(вн|чн)[уы]$/.test(fio[3]) : false;
@@ -9522,6 +9571,7 @@ function poaGuessFromPdf(paras, fileName) {
   }
   const iScope = all.findIndex((p, i) => i > iPre && /^представлять\s+интересы/i.test(p) && /:\s*$/.test(p));
   if (iScope >= 0) set('scope', all[iScope]);
+  else if (pre) { const sc = pre.match(/(представлять\s+интересы.*?:)\s*$/i); if (sc) set('scope', sc[1]); }   // 3.7: преамбула и предмет одним абзацем
   const iRev = all.findIndex(p => /^Сведения\s+об\s+отмене/i.test(p));
   if (iRev >= 0) set('revocation', all[iRev]);
   const sub = all.find(p => /с\s+правом\s+(последующего\s+)?передоверия/i.test(p) && p.length < 300 && !/в\s+лице/i.test(p));
@@ -9539,7 +9589,7 @@ function poaGuessFromPdf(paras, fileName) {
     if (!d && y) g.termYears = /^\d/.test(y[1]) ? Number(y[1]) : RU_NUM[y[1].toLowerCase()];
   }
   if (g.date && g.termYears && !g.validUntil) { const [yy, mm, dd] = g.date.split('-'); set('validUntil', `${Number(yy) + g.termYears}-${mm}-${dd}`); }
-  if (g.date && g.number) set('basis', `доверенности от ${fmtDateShort(g.date)} № ${g.number}`);
+  if (g.date && g.number) { if (g.entity) set('principal', g.principalTpl.replace('{ОСНОВАНИЕ}', `доверенности от ${fmtDateShort(g.date)} № ${g.number}`)); else set('basis', `доверенности от ${fmtDateShort(g.date)} № ${g.number}`); }
   g.delegationWord = 'уполномочивает (в порядке передоверия)';
   g.termTemplate = 'Доверенность выдана сроком по {ДАТА} включительно.';
   g.name = `Доверенность${g.date ? ' от ' + fmtDateShort(g.date) : ''}${g.number ? ' № ' + g.number : ''}${g.agentShort ? ' (' + g.agentShort + ')' : ''}`;
@@ -9547,6 +9597,7 @@ function poaGuessFromPdf(paras, fileName) {
   // дефис с пробелами по краям в тексте из PDF: в доверенностях это тире («(далее – Общество)»)
   const dash = t => String(t).replace(/(\S) - (?=\S)/g, '$1 – ');
   for (const k of ['principal', 'signerGen', 'scope', 'revocation', 'subDelegation']) if (g[k]) g[k] = dash(g[k]);
+  if (g.principalTpl) g.principalTpl = dash(g.principalTpl);
   // полномочия: абзацы между абзацем о предмете и абзацем об отмене
   const from = iScope >= 0 ? iScope + 1 : iPre + 1, to = iRev >= 0 ? iRev : all.length;
   const body = all.slice(Math.max(0, from), to).filter(p => /[\p{L}]{2}/u.test(p) && !/^[-–—]?\s*\d{1,3}\s*[-–—]?$/.test(p));
@@ -9667,7 +9718,10 @@ function peAutoNames() {
   const d = $('#pe_date').value, num = $('#pe_number').value.trim(); if (!isIso(d) || !num) return;
   const ed = $('#dlgPoaEdit'), auto = JSON.parse(ed.dataset.auto || '{}');
   const basis = `доверенности от ${fmtDateShort(d)} № ${num}`;
-  if (!$('#pe_basis').value.trim() || $('#pe_basis').value === auto.basis) { $('#pe_basis').value = basis; auto.basis = basis; }
+  if (auto.principalTpl) {   // 3.7: основная выдана юрлицу: ссылка на нее в реквизитах, основание подписанта не трогается
+    const pr = auto.principalTpl.replace('{ОСНОВАНИЕ}', basis);
+    if ($('#pe_principal').value === auto.principal) { $('#pe_principal').value = pr; auto.principal = pr; }
+  } else if (!$('#pe_basis').value.trim() || $('#pe_basis').value === auto.basis) { $('#pe_basis').value = basis; auto.basis = basis; }
   const who = (auto.agentShort ? ` (${auto.agentShort})` : '');
   const name = `Доверенность от ${fmtDateShort(d)} № ${num}${who}`;
   if (!$('#pe_name').value.trim() || $('#pe_name').value === auto.name || /^Доверенность( \(|$)/.test($('#pe_name').value)) { $('#pe_name').value = name; auto.name = name; }
