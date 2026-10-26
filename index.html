@@ -32,6 +32,9 @@
   --info: #1F56A6;
   --info-soft: #E8EFFA;
   --req-soft: #FFF8E1;
+  /* 3.3: пометки на листе PDF (лист всегда белый, поэтому одинаковы в обеих темах) */
+  --pv-ok: rgba(120, 205, 95, .42); --pv-info: rgba(110, 165, 245, .40); --pv-warn: rgba(255, 205, 40, .50); --pv-weak: rgba(255, 140, 60, .45);
+  --pv-sel: #1F56A6; --pv-flash: rgba(31, 86, 166, .45); --pv-flash0: rgba(31, 86, 166, 0); --pv-page: #FFFFFF;
   --ui: "Segoe UI", system-ui, -apple-system, Roboto, "Helvetica Neue", Arial, sans-serif;
   --radius: 8px;
   --radius-card: 12px;
@@ -808,6 +811,8 @@ dialog.full.drag { outline: 3px dashed var(--accent); outline-offset: -6px; }
 
 /* ---------- печать: только лист проекта ---------- */
 @media print {
+  #subPdfView, #pvSwitch { display: none !important; }
+  body.pv-pdf #previewScroll { display: block !important; }
   @page { size: A4; margin: 0; }
   html, body { height: auto; }
   body { background: #fff; display: block; overflow: visible; }
@@ -851,6 +856,34 @@ dialog.full.drag { outline: 3px dashed var(--accent); outline-offset: -6px; }
 .ck-pdf-legend i { width: 18px; height: 10px; border-radius: 2px; display: inline-block; }
 #btnCkPdf[aria-pressed="true"] .i { color: var(--accent); }
 .ck-pane-head { flex-wrap: wrap; }
+
+/* 3.3: PDF основной доверенности в проверке проекта и на шаге 2 */
+.seg-sw { display: inline-flex; gap: 2px; background: var(--line-soft); border-radius: var(--radius); padding: 3px; flex: none; }
+.seg-sw button { border: 0; background: transparent; min-height: 30px; padding: 0 12px; border-radius: 6px; color: var(--muted); font-weight: 500; font-size: 13px; white-space: nowrap; }
+.seg-sw button[aria-pressed="true"] { background: var(--paper); color: var(--ink); box-shadow: 0 1px 2px var(--shadow); font-weight: 600; }
+.pv-host { flex: 1; min-height: 0; overflow: auto; background: var(--desk); padding: 10px 14px 30px; position: relative; }
+.pv-host.drag { outline: 3px dashed var(--accent); outline-offset: -6px; }
+.pv-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 12.5px; color: var(--muted); margin: 0 auto 8px; }
+.pv-head > span { flex: 1; min-width: 0; }
+.pv-page { position: relative; margin: 0 auto 12px; background: var(--pv-page); box-shadow: 0 1px 2px var(--shadow), 0 6px 18px var(--shadow); }
+.pv-page canvas { position: absolute; left: 0; top: 0; }
+.pv-marks { position: absolute; inset: 0; }
+.pv-m { position: absolute; border-radius: 2px; cursor: pointer; mix-blend-mode: multiply; }
+.pv-m:hover { outline: 1.5px dashed var(--pv-sel); }
+.pv-m.m-ok { background: var(--pv-ok); }
+.pv-m.m-info { background: var(--pv-info); }
+.pv-m.m-warn { background: var(--pv-warn); }
+.pv-m.m-weak { background: var(--pv-weak); }
+.pv-m.sel:hover { outline: 0; }
+.pv-frame { position: absolute; border: 2.5px solid var(--pv-sel); border-radius: 4px; pointer-events: none; }
+.pv-frame.flash { animation: pvflash 1.1s ease-out 2; }
+@keyframes pvflash { 0% { box-shadow: 0 0 0 7px var(--pv-flash); } 100% { box-shadow: 0 0 0 0 var(--pv-flash0); } }
+.pv-msg { max-width: 520px; margin: 40px auto; display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center; font-size: 13.5px; }
+#subPdfView, #pvSwitch { display: none; }
+body[data-step="2"] #pvSwitch { display: inline-flex; }
+body.pv-pdf[data-step="2"] #subPdfView { display: block; }
+body.pv-pdf[data-step="2"] #previewScroll, body.pv-pdf[data-step="2"] .preview-head .zoom, body.pv-pdf[data-step="2"] #pagesInfo { display: none; }
+@media (prefers-reduced-motion: reduce) { .pv-frame.flash { animation: none; } }
 
 </style>
 <script>
@@ -1183,6 +1216,7 @@ try { var t = (JSON.parse(localStorage.getItem('dovk_ui_v1') || '{}') || {}).the
   <section class="pane pane-preview" aria-label="Документ">
     <div class="preview-head">
       <h2><span class="pv-s1">Так документ выглядит в Word</span><span class="pv-s23">Документ</span></h2>
+      <div class="seg-sw" id="pvSwitch" role="group" aria-label="Что показать справа"><button type="button" data-pv="doc" aria-pressed="true">Проект</button><button type="button" data-pv="pdf" aria-pressed="false">PDF основной</button></div>
       <span class="pages-info" id="pagesInfo"></span>
       <span class="zoom">
         <button type="button" class="btn small" id="zoomFit">По ширине</button>
@@ -1193,6 +1227,8 @@ try { var t = (JSON.parse(localStorage.getItem('dovk_ui_v1') || '{}') || {}).the
     <div class="preview-scroll" id="previewScroll">
       <div class="pages-wrap" id="pagesWrap"><div class="pages-scaler" id="pagesScaler"></div></div>
     </div>
+    <div class="pv-host" id="subPdfView" aria-label="PDF основной доверенности"></div>
+    <input type="file" id="subPdfFile" accept=".pdf,application/pdf" hidden>
   </section>
 </main>
 
@@ -1380,11 +1416,12 @@ try { var t = (JSON.parse(localStorage.getItem('dovk_ui_v1') || '{}') || {}).the
       </div>
     </section>
     <section class="ck-pane" aria-label="Основная доверенность">
-      <div class="ck-pane-head"><h3>Основная доверенность</h3><span class="muted ck-src" id="ckPoaInfo"></span><span class="spacer"></span><button type="button" class="chip" id="btnCkOnlyUsed" aria-pressed="false">Только переданные</button><button type="button" class="chip" id="btnCkPdf" aria-pressed="false" title="Выделить пункты, вошедшие в проект, прямо в PDF основной доверенности"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M8 13h8M8 17h5"/></svg><span>PDF с пометками</span></button></div>
+      <div class="ck-pane-head"><h3>Основная доверенность</h3><span class="muted ck-src" id="ckPoaInfo"></span><span class="spacer"></span><div class="seg-sw" id="ckViewSw" role="group" aria-label="Как показать основную доверенность"><button type="button" data-ckview="tree" aria-pressed="true">Пункты</button><button type="button" data-ckview="pdf" aria-pressed="false">PDF</button></div><button type="button" class="chip" id="btnCkOnlyUsed" aria-pressed="false">Только переданные</button><button type="button" class="chip" id="btnCkPdf" aria-pressed="false" title="Выделить пункты, вошедшие в проект, прямо в PDF основной доверенности"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M8 13h8M8 17h5"/></svg><span>PDF с пометками</span></button></div>
       <div class="ck-pdf" id="ckPdfBox" hidden></div>
       <input type="file" id="ckPdfFile" accept=".pdf,application/pdf" hidden>
       <div class="ck-info" id="ckSelInfo"></div>
       <div class="ck-scroll" id="ckTree"></div>
+      <div class="pv-host" id="ckPdfView" hidden aria-label="PDF основной доверенности"></div>
     </section>
   </div>
 </dialog>
@@ -1508,6 +1545,7 @@ try { var t = (JSON.parse(localStorage.getItem('dovk_ui_v1') || '{}') || {}).the
       <li>Отметьте галочками полномочия; галочка у раздела или блока отмечает все его пункты. Заголовки блоков («в рамках исполнения ...») и разделов («- подписывать:») попадают в текст автоматически, если в них выбран хотя бы один пункт. У заголовков видно, сколько выбрано.</li>
       <li>Поиск по словам и фильтры: «Все», «Только выбранные», «Из заявки» (после сверки заявки). «Развернуть все» и «Свернуть все» раскрывают блоки и разделы.</li>
       <li>Чтобы сузить полномочие, нажмите «Сузить формулировку» у пункта. Под полем правки исходный текст и сравнение: исключенные слова зачеркнуты, добавленные подчеркнуты. Если появились числа или слова вроде «любые», «иные», «в том числе», конструктор обращает на это внимание. Объем полномочия можно только уменьшать. «Вернуть исходный текст» отменяет правку. Если вместе со словами исключено ограничение (сумма, «за исключением», «только», «связанные с ...» и т.п.), у пункта появляется метка «исключено ограничение» и замечание на шаге 3: такая правка расширяет полномочие.</li>
+      <li><b>PDF основной доверенности рядом:</b> переключатель «Проект / PDF основной» над документом справа. Выбранные полномочия закрашены в PDF (зеленым без правок, синим суженные, желтым с добавлениями или снятым ограничением). Щелчок по полномочию в списке прокручивает PDF к нему и обводит рамкой, щелчок по пункту в PDF находит его в списке. Нужен PDF с текстовым слоем; для встроенной доверенности подходит и скан. PDF общий с проверкой проекта и запоминается в этом браузере.</li>
       <li>«Добавить свой пункт в этот раздел» вставляет формулировку, которой нет в основной доверенности. Она должна охватываться основной доверенностью по смыслу.</li>
       <li>Если в общих полномочиях выбран только раздел «совершать следующие действия», его заголовок не повторяется: абзац о предмете уже заканчивается словами «с правом совершать следующие действия:». Это отключается в оформлении на шаге 3.</li>
     </ul>
@@ -1543,6 +1581,7 @@ try { var t = (JSON.parse(localStorage.getItem('dovk_ui_v1') || '{}') || {}).the
       <li>Скан без текстового слоя не читается: сначала распознайте его. Ошибки распознавания (одна-две буквы, латинские буквы вместо русских) показываются как опечатки; числа и номера сравниваются строго.</li>
       <li>Если проект сделан в конструкторе и не пересохранялся в другой программе, конструктор сверяет текст с записанными в файл данными и сообщает, правили ли его после выгрузки.</li>
       <li><b>Исключено ограничение</b> (отдельный статус, желтая полоса): из пункта не добавлено ни слова, но убраны сумма или другое число либо ограничительные слова: «за исключением», «кроме», «только», «не более», «в пределах», «при условии», «по согласованию», «связанные с ...», «касающиеся ...», «указанных», «Филиала» и подобные. Полномочие от этого может стать шире основного. Пояснения после «в том числе» и «включая» и целые элементы перечня («акты сверки», «третьему лицу») так не считаются: их исключение сужает пункт. Если ограничение снято обоснованно, отметьте «Охватывается пунктом, запомнить».</li>
+      <li><b>«Пункты / PDF»</b> (переключатель над основной доверенностью справа): в режиме PDF вместо списка пунктов видны страницы самой основной доверенности, пункты из проекта закрашены цветом статуса. Щелчок по абзацу проекта прокручивает PDF к исходному пункту и обводит его рамкой; щелчок по пункту в PDF показывает, где он в проекте (или что его в проекте нет). PDF выбирается один раз и запоминается, его можно перетащить на просмотр.</li>
       <li><b>«PDF с пометками»</b> (над основной доверенностью справа): выберите PDF основной доверенности, и пункты, вошедшие в проект, будут выделены прямо в нем. Зеленым: совпадает; синим: сужено; желтым: с добавлениями или своими словами (конкретизация); оранжевым: частичное сходство. В примечании к выделению (видно в Adobe Reader и других программах при наведении или в списке комментариев) номер абзаца проекта, что изменено и текст абзаца. «Открыть PDF с пометками» показывает файл в новой вкладке, «Скачать» сохраняет его; исходный PDF не меняется. PDF можно перетащить на панель.</li>
       <li>Нужен PDF с текстовым слоем (распознанный). Для встроенной доверенности подходит и скан без текстового слоя: пометки ставятся по разметке, сделанной при встраивании. PDF запоминается в этом браузере для каждой основной доверенности (флажок «Запомнить файл»), его можно заменить («Другой PDF») или забыть. Если найдено мало пунктов, скорее всего, выбран PDF другой доверенности.</li>
       <li>«Открыть проект в конструкторе» восстанавливает проект из данных файла, а для проекта из другой программы отмечает найденные пункты и переносит измененные формулировки; открывается шаг 2. Пункты, которых нет в основной доверенности, не переносятся.</li>
@@ -6407,7 +6446,7 @@ function renderDatalists() {
   $('#repList').innerHTML = [...reps].map(x => `<option value="${esc(x)}">`).join('');
   $('#posList').innerHTML = [...poss].map(x => `<option value="${esc(x)}">`).join('');
 }
-function afterChange() { saveState(); renderChecks(); renderPreview(); }
+function afterChange() { saveState(); renderChecks(); renderPreview(); subPvSync(false); }   // 3.3: пометки в PDF на шаге 2
 function findRep(id) { return state.reps.find(r => r.id === id); }
 
 function bindForm() {
@@ -7118,8 +7157,9 @@ function bindPoas() {
 /* ПРАВИЛО ДОРАБОТКИ: при каждом изменении конструктора повышается APP_VERSION, в APP_CHANGES добавляется строка,
    а в APP_FEATURES дописывается или правится возможность с номером версии, с которой она есть.
    Вкладки «Возможности ПО» и «Версии» в справке строятся из этих перечней. */
-const APP_VERSION = '3.2';
+const APP_VERSION = '3.3';
 const APP_CHANGES = [
+  ['3.3', '26.10.2026', 'PDF основной доверенности прямо в конструкторе: в проверке проекта переключатель «Пункты / PDF» над основной доверенностью, на шаге 2 переключатель «Проект / PDF основной» над документом; щелчок по абзацу проекта или по полномочию в списке прокручивает PDF к пункту и обводит его рамкой, щелчок по пункту в PDF показывает его в проекте или в списке; пункты в PDF закрашены по статусу (в проверке) или по выбору и правкам (на шаге 2); PDF выбирается один раз и запоминается для каждой основной доверенности'],
   ['3.2', '26.10.2026', 'исключение ограничения из пункта больше не считается сужением: если убраны сумма или число, «за исключением», «только», «не более», «связанные с ...», «указанных», «Филиала» и другие ограничительные слова, проверка проекта ставит статус «исключено ограничение» и замечание; при сужении пункта в конструкторе то же видно под пунктом и в проверке на шаге 3; пояснения после «в том числе» и «включая» и целые элементы перечня ограничением не считаются'],
   ['3.1', '26.10.2026', 'в проверке проекта кнопка «PDF с пометками»: пункты, вошедшие в проект, выделяются прямо в PDF основной доверенности, цвет по статусу (совпадает, сужено, с добавлениями, частичное сходство); в примечании к выделению номер абзаца проекта, что изменено и текст абзаца; нужен PDF с текстовым слоем, для встроенной доверенности подходит и скан без него; PDF запоминается в браузере для каждой основной доверенности, исходный файл не меняется'],
   ['3.0', '22.10.2026', 'новый интерфейс: стартовый экран с выбором задачи (доверенность в порядке передоверия, новая доверенность из образцов, проверка проекта коллеги); проект передоверия собирается в три шага, документ всегда виден справа; на последнем шаге панель готовности показывает, что осталось проверить; заявка подсвечивает пункты прямо в списке полномочий; проверка проекта и сборка новой доверенности открываются на все окно со счетчиками по статусам; кнопки и подсказки переименованы под задачи; логика сборки DOCX, проверок и сверки не менялась'],
@@ -7202,9 +7242,15 @@ const APP_FEATURES = [
     ['Запомненные решения проверяющего: «охватывается пунктом», ручное сопоставление и слова, не меняющие объем полномочия, применяются к дословно таким же абзацам в следующих проверках; список решений с удалением, сохранение в файл и загрузка, перенос вместе с экспортом всех данных', '2.1'],
     ['Исключено ограничение: если из пункта убрать сумму или другое число, «за исключением», «кроме», «только», «не более», «в пределах», «при условии», «по согласованию», «связанные с ...», «указанных», «Филиала» и другие ограничительные слова (всего около 90 оборотов), проверка проекта ставит отдельный статус и замечание: новых слов нет, но полномочие может стать шире. Пояснения после «в том числе», «включая» и целые элементы перечня ограничением не считаются', '3.2'],
     ['То же при сужении формулировки в конструкторе: метка «исключено ограничение» у пункта, подсказка в сравнении и замечание на шаге 3', '3.2'],
+    ['Просмотр PDF основной доверенности рядом с проектом (переключатель «Пункты / PDF»): щелчок по абзацу проекта прокручивает PDF к исходному пункту и обводит его рамкой, щелчок по пункту в PDF показывает абзац проекта; пункты закрашены цветом статуса', '3.3'],
     ['PDF с пометками: пункты основной доверенности, вошедшие в проект, выделяются в PDF основной доверенности цветом по статусу; в примечании к выделению номер абзаца проекта, итог сравнения и текст абзаца; открыть или скачать новый файл, исходный не меняется', '3.1'],
     ['Пункты находятся в PDF по текстовому слою, в том числе в скане, положенном «боком», и с ошибками распознавания; для встроенной доверенности пометки ставятся и в скане без текстового слоя (по разметке, сделанной при встраивании)', '3.1'],
     ['PDF основной доверенности запоминается в этом браузере отдельно для каждой основной доверенности; его можно заменить или забыть. Модуль записи PDF (pdf-lib) встроен в файл и работает без интернета', '3.1'],
+  ]],
+  ['PDF основной доверенности на шаге 2', [
+    ['Переключатель «Проект / PDF основной» над документом: справа страницы самой основной доверенности, выбранные полномочия закрашены (зеленым без правок, синим суженные, желтым с добавлениями или снятым ограничением)', '3.3'],
+    ['Щелчок по полномочию в списке прокручивает PDF к нему и обводит рамкой; щелчок по пункту в PDF находит его в списке', '3.3'],
+    ['Тот же PDF, что в проверке проекта: выбирается один раз для основной доверенности и запоминается в этом браузере; PDF можно перетащить на просмотр', '3.3'],
   ]],
   ['Проверки', [
     ['Срок не позже срока основной доверенности (п. 4 ст. 187 ГК РФ)', '1.0'],
@@ -8300,6 +8346,7 @@ function ckRun() {
   $('#ckEmpty').hidden = true; $('#ckMain').hidden = false; $('#ckSummary').hidden = false;
   ckRenderSummary(); ckRenderDoc(); ckRenderTree(); ckRenderInfo();
   ckPdfRevoke(); if (ckPdf.open) ckPdfBuild(); else ckRenderPdfBox();   // 3.1: пометки в PDF строятся заново по новому результату
+  ckPvSync(false);   // 3.3
 }
 /* 3.0: группы статусов для сводки-фильтра */
 const CK_GROUPS = [
@@ -8443,6 +8490,7 @@ function ckSelectUnit(n, scrollDoc) {
   if (scrollDoc) ckScrollTo($(`#ckDoc .ck-u[data-u="${n}"]`), $('#ckDoc'));
   const target = ck.sel.item ? $(`#ckTree .ck-it[data-ckit="${CSS.escape(ck.sel.item)}"]`) : ck.sel.sec ? $(`#ckTree .ck-s[data-cks="${CSS.escape(ck.sel.sec)}"]`) : ck.sel.block ? $(`#ckTree .ck-b[data-ckb="${CSS.escape(ck.sel.block)}"]`) : null;
   ckScrollTo(target, $('#ckTree'));
+  ckPvSync(false);   // 3.3
 }
 function ckSelectItem(id, fromUnit) {
   ckEnsureVisible(id);
@@ -8453,6 +8501,7 @@ function ckSelectItem(id, fromUnit) {
   if (us.length && ck.stFilter && !us.some(u => ckGroupOf(u.st) === ck.stFilter)) { ck.stFilter = null; ckRenderSummary(); ckRenderDoc(); ckMarkActive(); }   // 3.0
   if (us.length) ckScrollTo($(`#ckDoc .ck-u[data-u="${us[0].n}"]`), $('#ckDoc'));
   ckScrollTo($(`#ckTree .ck-it[data-ckit="${CSS.escape(id)}"]`), $('#ckTree'));
+  ckPvSync(false);   // 3.3
 }
 function ckSelectFragment(frag, unitN) {
   const R = ck.R; const u = R.units.find(v => v.n === unitN);
@@ -8474,6 +8523,7 @@ function ckSelectFragment(frag, unitN) {
   if (cands.length) { ck.sel.item = cands[0].x.it.id; ckEnsureVisible(ck.sel.item); }
   ckMarkActive(); ckRenderInfo();
   if (ck.sel.item) ckScrollTo($(`#ckTree .ck-it[data-ckit="${CSS.escape(ck.sel.item)}"]`), $('#ckTree'));
+  ckPvSync(false);   // 3.3
 }
 function ckCandHtml(c, forUnit, frag) {
   const p = Math.round(100 * Math.min(1, c.exact ? 1 : frag ? c.cR : c.rank));
@@ -8936,7 +8986,7 @@ async function pdfLocateFile(poa, rec) {
   if (W.chars >= 200) { loc = pdfLocate(poa, W); loc.mode = 'text'; }
   else if (poa.pdfMap && poa.pdfMap.pages === W.pages.length) { loc = pdfFromMap(poa.pdfMap, W.pages); loc.mode = 'map'; }
   else loc = { items: {}, found: 0, total: 0, mode: poa.pdfMap ? 'mapPages' : 'noText' };
-  loc.pages = W.pages.length;
+  loc.pages = W.pages.length; loc.doc = doc;   // 3.3: документ нужен просмотру PDF
   pdfLocCache[key] = loc;
   return loc;
 }
@@ -9065,8 +9115,9 @@ async function ckPdfLoad(f) {
   const keep = $('#ckPdfKeep') ? $('#ckPdfKeep').checked : ckPdf.keep !== false;
   const kept = await pdfPut(poa.id, { name: f.name, size: f.size, at: Date.now(), data }, keep);
   if (keep && !kept) toast('Запомнить PDF в этом браузере не удалось: он доступен до перезагрузки страницы');
-  ckPdf.open = true;
-  if (ck.R) ckPdfBuild(); else ckRenderPdfBox();
+  if (ui.ckView !== 'pdf') ckPdf.open = true;   // 3.3: из просмотра PDF панель пометок не открывается
+  if (ck.R && ckPdf.open) ckPdfBuild(); else ckRenderPdfBox();
+  ckPvSync(true);
 }
 /* для встраивания доверенности в файл (README): разметка pdfMap по распознанной копии PDF, вызывается из консоли */
 window.dovkTools = {
@@ -9088,12 +9139,185 @@ function bindCkPdf() {
   box.addEventListener('click', async e => {
     const b = e.target.closest('[data-pdf]'); if (!b) return;
     if (b.dataset.pdf === 'close') { ckPdf.open = false; ckRenderPdfBox(); }
-    if (b.dataset.pdf === 'forget') { const poa = ck.R ? ck.R.poa : getPoa(ck.poaId); if (poa) await pdfForget(poa.id); ckPdfRevoke(); ckPdf.err = null; ckRenderPdfBox(); toast('PDF основной доверенности забыт'); }
+    if (b.dataset.pdf === 'forget') { const poa = ck.R ? ck.R.poa : getPoa(ck.poaId); if (poa) await pdfForget(poa.id); ckPdfRevoke(); ckPdf.err = null; ckRenderPdfBox(); ckPvSync(true); toast('PDF основной доверенности забыт'); }
   });
   // PDF, брошенный на панель, считается PDF основной доверенности, а не проектом
   box.addEventListener('dragover', e => { if (e.dataTransfer && [...e.dataTransfer.types].includes('Files')) { e.preventDefault(); e.stopPropagation(); box.classList.add('drag'); } });
   box.addEventListener('dragleave', e => { if (!box.contains(e.relatedTarget)) box.classList.remove('drag'); });
   box.addEventListener('drop', e => { e.preventDefault(); e.stopPropagation(); box.classList.remove('drag'); $('#dlgCheck').classList.remove('drag'); const f = e.dataTransfer.files[0]; if (f) ckPdfLoad(f); });
+}
+
+/* ======================================================================
+   3.3: PDF основной доверенности прямо в конструкторе. Страницы рисуются pdf.js по мере прокрутки,
+   поверх них прямоугольники пунктов (из pdfLocateFile): цвет по статусу, щелчок по пункту
+   сообщает его id, show(id) прокручивает к пункту и обводит его. Один и тот же просмотр
+   используется в проверке проекта и на шаге 2 проекта передоверия
+   ====================================================================== */
+function makePdfView(host, o) {
+  const st = { poaId: null, key: null, loc: null, marks: {}, sel: null, token: 0, width: 0, io: null };
+  const msg = html => { host.innerHTML = `<div class="pv-msg">${html}</div>`; st.key = null; };
+  async function open(poa, force) {
+    if (!poa) { msg('Нет основной доверенности'); return; }
+    const rec = await pdfGet(poa.id);
+    if (!rec) { st.poaId = poa.id; msg(o.emptyHtml(poa)); return; }
+    const key = poa.id + '|' + rec.name + '|' + rec.size + '|' + rec.at;
+    const w = Math.max(200, host.clientWidth - 28);
+    if (!force && st.key === key && Math.abs(w - st.width) < 2) { apply(); return; }
+    const tok = ++st.token;
+    if (st.key !== key) msg('Открываю PDF и ищу в нем пункты...');
+    let loc;
+    try { loc = await pdfLocateFile(poa, rec); } catch (e) { console.error(e); msg(`Не удалось открыть PDF: ${esc(e.message)}`); return; }
+    if (tok !== st.token) return;
+    if (loc.mode === 'noText') { msg(`В PDF «${esc(rec.name)}» нет текстового слоя: пункты в нем не найти. Распознайте файл и выберите его снова. ${o.otherHtml}`); return; }
+    if (loc.mode === 'mapPages') { msg(`В PDF «${esc(rec.name)}» нет текстового слоя, а разметка встроенной доверенности сделана для другого числа страниц. ${o.otherHtml}`); return; }
+    st.poaId = poa.id; st.key = key; st.loc = loc; st.width = w;
+    if (st.io) st.io.disconnect();
+    const doc = loc.doc, pages = [];
+    const head = `<div class="pv-head"><span>${esc(rec.name)}: найдено ${loc.found} из ${loc.total} ${plural(loc.total, 'пункта', 'пунктов', 'пунктов')}${loc.mode === 'map' ? ', скан без текстового слоя (разметка встроенной доверенности)' : ''}</span>${o.otherHtml}</div>`;
+    host.innerHTML = head;
+    // все страницы сразу получают размер, рисуются только видимые
+    for (let p = 1; p <= doc.numPages; p++) {
+      const page = await doc.getPage(p); if (tok !== st.token) return;
+      const vp = page.getViewport({ scale: w / page.getViewport({ scale: 1 }).width });
+      const div = document.createElement('div'); div.className = 'pv-page'; div.dataset.p = p;
+      div.style.width = vp.width + 'px'; div.style.height = vp.height + 'px';
+      const marks = document.createElement('div'); marks.className = 'pv-marks';
+      for (const id in loc.items) for (const r of loc.items[id].rects) if (r.p === p) {
+        const xs = [], ys = [];
+        for (let i = 0; i < 8; i += 2) { const [x, y] = vp.convertToViewportPoint(r.q[i], r.q[i + 1]); xs.push(x); ys.push(y); }
+        const m = document.createElement('div'); m.className = 'pv-m'; m.dataset.item = id;
+        m.style.left = (Math.min(...xs) - 2) + 'px'; m.style.top = (Math.min(...ys) - 1) + 'px';
+        m.style.width = (Math.max(...xs) - Math.min(...xs) + 4) + 'px'; m.style.height = (Math.max(...ys) - Math.min(...ys) + 2) + 'px';
+        marks.appendChild(m);
+      }
+      div.appendChild(marks); host.appendChild(div); pages.push({ div, page, vp, done: false });
+    }
+    const draw = async P => {
+      if (P.done) return; P.done = true;
+      const dpr = Math.min(2, window.devicePixelRatio || 1);
+      const c = document.createElement('canvas'); c.width = Math.floor(P.vp.width * dpr); c.height = Math.floor(P.vp.height * dpr);
+      c.style.width = P.vp.width + 'px'; c.style.height = P.vp.height + 'px';
+      P.div.insertBefore(c, P.div.firstChild);
+      try { await P.page.render({ canvasContext: c.getContext('2d'), viewport: P.vp, transform: dpr !== 1 ? [dpr, 0, 0, dpr, 0, 0] : null }).promise; }
+      catch (e) { console.error(e); }
+    };
+    st.io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) draw(pages[Number(e.target.dataset.p) - 1]); }), { root: host, rootMargin: '800px 0px' });
+    pages.forEach(P => st.io.observe(P.div));
+    apply();
+    if (st.sel) show(st.sel, true);
+  }
+  function apply() {
+    host.querySelectorAll('.pv-frame').forEach(f => f.remove());
+    host.querySelectorAll('.pv-m').forEach(m => { m.className = 'pv-m' + (st.marks[m.dataset.item] ? ' m-' + st.marks[m.dataset.item] : '') + (m.dataset.item === st.sel ? ' sel' : ''); });
+  }
+  function setMarks(marks) { st.marks = marks || {}; apply(); }
+  /* прокрутить к пункту и обвести его; false, если пункт в PDF не найден */
+  function show(id, scroll = true) {
+    st.sel = id || null; apply();
+    if (!id || !st.loc) return false;
+    const els = [...host.querySelectorAll(`.pv-m[data-item="${CSS.escape(id)}"]`)];
+    if (!els.length) return false;
+    // рамка вокруг всех строк пункта на каждой странице
+    const byLayer = new Map(); els.forEach(e => { const L = e.parentElement; (byLayer.get(L) || byLayer.set(L, []).get(L)).push(e); });
+    for (const [L, es] of byLayer) {
+      const x0 = Math.min(...es.map(e => e.offsetLeft)), y0 = Math.min(...es.map(e => e.offsetTop));
+      const x1 = Math.max(...es.map(e => e.offsetLeft + e.offsetWidth)), y1 = Math.max(...es.map(e => e.offsetTop + e.offsetHeight));
+      const f = document.createElement('div'); f.className = 'pv-frame';
+      f.style.left = (x0 - 4) + 'px'; f.style.top = (y0 - 3) + 'px'; f.style.width = (x1 - x0 + 8) + 'px'; f.style.height = (y1 - y0 + 6) + 'px';
+      L.appendChild(f);
+    }
+    if (scroll) {
+      const r = (host.querySelector('.pv-frame') || els[0]).getBoundingClientRect(), h = host.getBoundingClientRect();
+      if (r.top < h.top + 30 || r.bottom > h.bottom - 30) host.scrollTo({ top: host.scrollTop + r.top - h.top - Math.min(120, h.height * 0.2), behavior: 'smooth' });
+    }
+    host.querySelectorAll('.pv-frame').forEach(e => { e.classList.remove('flash'); void e.offsetWidth; e.classList.add('flash'); });
+    return true;
+  }
+  host.addEventListener('click', e => { const m = e.target.closest('.pv-m'); if (m && o.onPick) o.onPick(m.dataset.item); });
+  // ширина панели изменилась: страницы перестраиваются
+  let rt = null;
+  new ResizeObserver(() => { if (!st.key || host.hidden || !host.clientWidth) return; clearTimeout(rt); rt = setTimeout(() => { const poa = getPoa(st.poaId); if (poa && Math.abs(host.clientWidth - 28 - st.width) > 30) open(poa, true); }, 250); }).observe(host);
+  return { open, setMarks, show, reset() { st.key = null; st.token++; host.innerHTML = ''; }, get poaId() { return st.poaId; }, has: id => !!(st.loc && st.loc.items[id]) };
+}
+const PV_EMPTY = (pick, poa) => `<p><b>PDF основной доверенности ${esc(poa.number ? '№ ' + poa.number : '')} еще не выбран.</b></p>
+  <p class="muted">Нужен PDF с текстовым слоем (распознанный); для встроенной доверенности подходит и скан без него. Файл не покидает компьютер и запоминается в этом браузере.</p>
+  <button type="button" class="btn small primary" data-pick="${pick}">Выбрать PDF основной доверенности</button>`;
+const PV_OTHER = pick => `<button type="button" class="btn link small" data-pick="${pick}">Другой PDF</button>`;
+/* уровень пометки пункта по абзацам проверяемого проекта */
+function ckItemLevel(R, id) {
+  const used = R.byItem[id] || [], weak = R.weakBy[id] || [];
+  if (!used.length) return weak.length ? 'weak' : '';
+  const lv = used.map(u => u.flags.some(f => f.k === 'limit') ? 'warn' : CK_ST[u.st][1]).sort((a, b) => ['ok', 'info', 'warn', 'err'].indexOf(b) - ['ok', 'info', 'warn', 'err'].indexOf(a))[0];
+  return lv === 'err' ? 'warn' : lv;
+}
+
+/* проверка проекта: переключатель «Пункты / PDF» в правой панели */
+let ckPv = null;
+function ckView(v) {
+  ui.ckView = v; saveUi();
+  $$('#ckViewSw button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.ckview === v)));
+  const pdf = v === 'pdf';
+  $('#ckTree').hidden = pdf; $('#ckPdfView').hidden = !pdf; $('#btnCkOnlyUsed').hidden = pdf;
+  if (pdf) ckPvSync(true);
+}
+async function ckPvSync(open) {
+  if (!ckPv || ui.ckView !== 'pdf' || $('#ckPdfView').hidden) return;
+  const poa = ck.R ? ck.R.poa : getPoa(ck.poaId) || curPoa();
+  if (open || ckPv.poaId !== (poa && poa.id)) await ckPv.open(poa);
+  if (ck.R) { const m = {}; for (const x of ck.R.idx.items) { const l = ckItemLevel(ck.R, x.it.id); if (l) m[x.it.id] = l; } ckPv.setMarks(m); }
+  const id = ck.sel && ck.sel.item;
+  if (id && !ckPv.show(id) && ckPv.poaId) toast('Этот пункт в PDF не найден');
+  if (!id) ckPv.show(null);
+}
+
+/* шаг 2 проекта передоверия: переключатель «Документ / PDF основной» в панели предпросмотра */
+let subPv = null;
+function subView(v) {
+  ui.subPdf = v === 'pdf'; saveUi();
+  $$('#pvSwitch button').forEach(b => b.setAttribute('aria-pressed', String((b.dataset.pv === 'pdf') === !!ui.subPdf)));
+  document.body.classList.toggle('pv-pdf', !!ui.subPdf);
+  if (ui.subPdf) subPvSync(true); else renderPreview();
+}
+function subLevel(id) {
+  if (!state.sel[id]) return '';
+  if (!Object.prototype.hasOwnProperty.call(state.edits, id)) return 'ok';
+  const f = findItem(id); if (!f) return 'ok';
+  const d = diffNotes(diffWords(f.it.text, state.edits[id]));
+  return d.insWords || (d.lim && (d.lim.phrases.length || d.lim.nums.length)) ? 'warn' : d.delWords ? 'info' : 'ok';
+}
+async function subPvSync(open, showId) {
+  if (!subPv || !ui.subPdf || document.body.dataset.screen !== 'sub' || document.body.dataset.step !== '2') return;
+  const poa = curPoa();
+  if (open || subPv.poaId !== (poa && poa.id)) await subPv.open(poa);
+  if (poa) { const m = {}; for (const b of poa.blocks) for (const s of b.sections) for (const it of s.items) { const l = subLevel(it.id); if (l) m[it.id] = l; } subPv.setMarks(m); }
+  if (showId) subPv.show(showId);
+}
+async function subPdfLoad(f) {
+  if (!/\.pdf$/i.test(f.name)) { toast('Нужен файл PDF основной доверенности'); return; }
+  const poa = curPoa(); if (!poa) return;
+  const kept = await pdfPut(poa.id, { name: f.name, size: f.size, at: Date.now(), data: await f.arrayBuffer() }, true);
+  if (!kept) toast('Запомнить PDF в этом браузере не удалось: он доступен до перезагрузки страницы');
+  subPvSync(true);
+}
+
+function bindPdfViews() {
+  ckPv = makePdfView($('#ckPdfView'), { emptyHtml: poa => PV_EMPTY('ckPdfFile', poa), otherHtml: PV_OTHER('ckPdfFile'), onPick: id => { if (ck.R) ckSelectItem(id); } });
+  subPv = makePdfView($('#subPdfView'), { emptyHtml: poa => PV_EMPTY('subPdfFile', poa), otherHtml: PV_OTHER('subPdfFile'), onPick: id => { openItem30(id); subPv.show(id, false); } });
+  $('#ckViewSw').addEventListener('click', e => { const b = e.target.closest('[data-ckview]'); if (b) ckView(b.dataset.ckview); });
+  $('#pvSwitch').addEventListener('click', e => { const b = e.target.closest('[data-pv]'); if (b) subView(b.dataset.pv); });
+  $('#subPdfFile').addEventListener('change', e => { const f = e.target.files[0]; e.target.value = ''; if (f) subPdfLoad(f); });
+  // шаг 2: щелчок по полномочию (текст или галочка) показывает его в PDF
+  $('#powers').addEventListener('click', e => { if (!ui.subPdf) return; const it = e.target.closest('.item[data-item]'); if (it && !e.target.closest('button, textarea')) subPvSync(false, it.dataset.item); });
+  // PDF, брошенный на просмотр, считается PDF основной доверенности
+  for (const [id, load] of [['#ckPdfView', ckPdfLoad], ['#subPdfView', subPdfLoad]]) {
+    const el = $(id);
+    el.addEventListener('dragover', e => { if (e.dataTransfer && [...e.dataTransfer.types].includes('Files')) { e.preventDefault(); e.stopPropagation(); el.classList.add('drag'); } });
+    el.addEventListener('dragleave', e => { if (!el.contains(e.relatedTarget)) el.classList.remove('drag'); });
+    el.addEventListener('drop', e => { e.preventDefault(); e.stopPropagation(); el.classList.remove('drag'); $('#dlgCheck').classList.remove('drag'); const f = e.dataTransfer.files[0]; if (f) load(f); });
+  }
+  ckView(ui.ckView === 'pdf' ? 'pdf' : 'tree');
+  $$('#pvSwitch button').forEach(b => b.setAttribute('aria-pressed', String((b.dataset.pv === 'pdf') === !!ui.subPdf)));
+  document.body.classList.toggle('pv-pdf', !!ui.subPdf);
 }
 
 /* ======================================================================
@@ -9642,7 +9866,7 @@ function goScreen(screen, step) {
   });
   $$('.pane-form .scroll, #powers, #previewScroll, main.layout').forEach(e => { e.scrollTop = 0; });
   if (screen === 'home') renderHome();
-  else { renderPreviewNow(); applyZoom(); }
+  else { renderPreviewNow(); applyZoom(); subPvSync(false); }   // 3.3
 }
 // 3.0: стартовый экран читает состояние формы, сборки и черновиков
 function renderHome() {
@@ -9771,7 +9995,7 @@ function init() {
   bindForm(); bindPowers(); bindDrafts(); bindPoas(); bindMisc(); bindTheme(); bindImport(); bindHelp(); bindCheck(); bindMk();
   renderPoaSelect(); renderPoaCard(); fillForm(); renderPowers(); renderChecks(); applyDocFont();
   renderPreview();
-  bind30(); bindCkPdf();   // 3.1
+  bind30(); bindCkPdf(); bindPdfViews();   // 3.1, 3.3
   goScreen(ui.screen === 'sub' ? 'sub' : 'home', ui.step);   // 3.0: экран и шаг восстанавливаются, после 2.2 открывается стартовый экран
 }
 init();
