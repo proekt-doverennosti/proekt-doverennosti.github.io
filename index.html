@@ -33,7 +33,7 @@
   --info-soft: #E8EFFA;
   --req-soft: #FFF8E1;
   /* 3.3: пометки на листе PDF (лист всегда белый, поэтому одинаковы в обеих темах) */
-  --pv-ok: rgba(120, 205, 95, .42); --pv-info: rgba(110, 165, 245, .40); --pv-warn: rgba(255, 205, 40, .50); --pv-weak: rgba(255, 140, 60, .45);
+  --pv-ok: rgba(120, 205, 95, .42); --pv-info: rgba(110, 165, 245, .40); --pv-warn: rgba(255, 205, 40, .50); --pv-weak: rgba(255, 140, 60, .45); --pv-err: rgba(235, 60, 50, .40);
   --pv-sel: #1F56A6; --pv-flash: rgba(31, 86, 166, .45); --pv-flash0: rgba(31, 86, 166, 0); --pv-page: #FFFFFF;
   --ui: "Segoe UI", system-ui, -apple-system, Roboto, "Helvetica Neue", Arial, sans-serif;
   --radius: 8px;
@@ -888,6 +888,27 @@ body.pv-pdf[data-step="2"] #previewScroll, body.pv-pdf[data-step="2"] .preview-h
 #dlgCheck.ck-pdfmode #ckPdfView { flex: 1 0 55%; min-height: 0; }
 #dlgCheck.ck-pdfmode #ckSelInfo { flex: 0 1 auto; min-height: 56px; max-height: none; overflow: auto; }
 #dlgCheck.ck-pdfmode #ckPdfBox { flex: 0 1 auto; min-height: 48px; max-height: none; overflow: auto; }
+/* 3.6: редактор основной доверенности со сверкой по PDF */
+#dlgPoaEdit.pe-pdf { width: 96vw; max-width: 96vw; height: 92vh; max-height: 92vh; }
+#dlgPoaEdit.pe-pdf .pe-body { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; overflow: hidden; padding-bottom: 0; }
+#dlgPoaEdit.pe-pdf .pe-left { overflow: auto; min-height: 0; padding-right: 4px; padding-bottom: 16px; }
+#dlgPoaEdit.pe-pdf #pe_text { min-height: 50vh !important; }
+.pe-right { display: flex; flex-direction: column; min-height: 0; border-left: 1px solid var(--line); padding-left: 16px; }
+.pe-right .pv-host { flex: 1; min-height: 0; border-radius: var(--radius); }
+.pe-ver { flex: none; max-height: 34%; overflow: auto; font-size: 13px; margin-bottom: 8px; display: flex; flex-direction: column; gap: 6px; }
+.pe-ver-h { display: flex; gap: 8px; align-items: center; font-weight: 600; padding: 8px 10px; border-radius: var(--radius); }
+.pe-ver-h.ok { background: var(--ok-soft); color: var(--ok); }
+.pe-ver-h.warn { background: var(--warn-soft); color: var(--warn); }
+.pe-ver-s { color: var(--muted); }
+.pe-ver-l ul { margin: 4px 0 0; padding-left: 18px; display: flex; flex-direction: column; gap: 3px; }
+.pe-note { background: var(--req-soft); border: 1px solid var(--warn-soft); border-radius: var(--radius); padding: 8px 12px; font-size: 13px; margin-bottom: 10px; }
+.field input.guessed, .field textarea.guessed { background: var(--req-soft); }
+.field input.need, .field textarea.need { border-color: var(--warn); box-shadow: 0 0 0 1px var(--warn); }
+.pv-m.m-err { background: var(--pv-err); }
+#dlgPoas.drag { outline: 3px dashed var(--accent); outline-offset: -6px; }
+.list li.hid .t { color: var(--muted); }
+.poa-pdf .ck-link { margin-left: 6px; }
+.ck-link.danger { color: var(--danger); }
 
 </style>
 <script>
@@ -1257,6 +1278,7 @@ try { var t = (JSON.parse(localStorage.getItem('dovk_ui_v1') || '{}') || {}).the
   <div class="dlg-head"><h2 id="dlgPoasT">Доверенности и бланки</h2><button type="button" class="btn small" data-close>Закрыть</button></div>
   <div class="dlg-body">
     <h3 class="sub-h">Основные доверенности</h3>
+    <p class="small-note pe-drop-note">Новую основную доверенность проще всего добавить из PDF: нажмите «Добавить из PDF» или перетащите PDF в это окно. Поля и полномочия заполнятся по тексту, разметка сразу сверится с PDF, а сам PDF привяжется к доверенности.</p>
     <ul class="list" id="poaList"></ul>
     <h3 class="sub-h">Бланки Word</h3>
     <ul class="list" id="blankList"></ul>
@@ -1273,14 +1295,20 @@ try { var t = (JSON.parse(localStorage.getItem('dovk_ui_v1') || '{}') || {}).the
       <input type="file" id="poaImport" accept=".json" hidden>
     </div>
     <button type="button" class="btn" id="btnMk2">Собрать из образцов</button>
-    <button type="button" class="btn primary" id="btnPoaAdd">Добавить доверенность</button>
+    <button type="button" class="btn" id="btnPoaAdd">Добавить вручную</button>
+    <button type="button" class="btn primary" data-pick="poaPdfFile">Добавить из PDF</button>
+    <input type="file" id="poaPdfFile" accept=".pdf,application/pdf" hidden>
+    <input type="file" id="poaRowPdf" accept=".pdf,application/pdf" hidden>
   </div>
 </dialog>
 
 <!-- ================= редактор основной доверенности ================= -->
 <dialog id="dlgPoaEdit" class="wide" aria-labelledby="poaEditTitle">
-  <div class="dlg-head"><h2 id="poaEditTitle">Новая основная доверенность</h2><button type="button" class="btn small" data-close>Закрыть</button></div>
-  <div class="dlg-body">
+  <div class="dlg-head"><h2 id="poaEditTitle">Новая основная доверенность</h2><button type="button" class="btn small" data-pick="pePdfFile" title="Сверить разметку полномочий с PDF доверенности">Сверить с PDF</button><button type="button" class="btn small" data-close>Закрыть</button></div>
+  <input type="file" id="pePdfFile" accept=".pdf,application/pdf" hidden>
+  <div class="dlg-body pe-body">
+   <div class="pe-left">
+    <p class="pe-note" id="peGuessNote" hidden></p>
     <h3 class="sub-h">Реквизиты</h3>
     <div class="row">
       <div class="field"><label for="pe_name">Название в списке</label><input type="text" id="pe_name" placeholder="Доверенность от 01.01.2027 № 1 (Иванов И.И.)"></div>
@@ -1330,6 +1358,11 @@ try { var t = (JSON.parse(localStorage.getItem('dovk_ui_v1') || '{}') || {}).the
       <button type="button" class="btn small" id="btnJoinLines">Склеить перенесенные строки</button>
       <span id="pe_stats" class="muted"></span>
     </div>
+   </div>
+   <section class="pe-right" id="pePdfPane" hidden aria-label="Сверка разметки с PDF">
+    <div class="pe-ver" id="peVer"></div>
+    <div class="pv-host" id="pePdfView"></div>
+   </section>
   </div>
   <div class="dlg-foot">
     <button type="button" class="btn" data-close>Отмена</button>
@@ -1605,18 +1638,23 @@ try { var t = (JSON.parse(localStorage.getItem('dovk_ui_v1') || '{}') || {}).the
     </ul>
 
     <h3>Как добавить новую основную доверенность</h3>
-    <p>Новая доверенность сначала добавляется в ваш браузер (шаги 1-7), а потом, при желании, встраивается в файл конструктора для всех коллег (шаги 8-9).</p>
+    <p>Проще всего из PDF самой доверенности. Доверенность сначала добавляется в ваш браузер, потом, при желании, встраивается в файл конструктора для всех коллег.</p>
     <ol class="steps">
-      <li>Откройте «Доверенности и бланки» на стартовом экране. Если новая доверенность похожа на действующую, нажмите у действующей <b>«Копировать и изменить»</b>: преамбула, абзац об отмене и подпись уже будут заполнены. Если совсем другая, нажмите «Добавить доверенность».</li>
-      <li>Заполните реквизиты: название в списке, номер, дата выдачи, «действует по». Название в списке видите только вы, например «Доверенность от 01.01.2027 № 1 (Иванов И.И.)». Здесь же выберите бланк организации-доверителя.</li>
-      <li>Проверьте поля преамбулы. «Подписант в родительном падеже» пишется так, как он стоит после слов «в лице»: «директора филиала Иванова Ивана Ивановича». «Основание»: «доверенности от 01.01.2027 № 1». В поле «Кому разрешено передоверие» укажите, кому основная доверенность разрешает передоверять. Паспортные данные никуда не вносятся.</li>
-      <li>Скопируйте из распознанного PDF или из Word текст полномочий (от первого «заключать ...» до последнего пункта, без абзаца об отмене доверенностей) и вставьте его в поле «Полномочия».</li>
-      <li>Если текст из PDF и строки оборваны посередине фраз, нажмите <b>«Склеить перенесенные строки»</b>.</li>
-      <li>Нажмите <b>«Разметить автоматически»</b>. В начале строк появятся знаки: <code>==</code> перед блоком («в рамках исполнения агентского договора ...»), <code>##</code> перед разделом («заключать ...», «подписывать:»). Все остальные строки станут пунктами, одна строка на одно полномочие.</li>
-      <li>Сравните счетчик под полем (например, «3 блока, 10 разделов, 60 пунктов») с оригиналом. Если два пункта слиплись, разделите строку клавишей Enter; если пункт разорван, склейте строки. Затем нажмите «Сохранить доверенность» и в списке «Использовать».</li>
-      <li>Проверка разметки: откройте «Сверить заявку», вставьте тот же текст полномочий из оригинала, нажмите «Склеить перенесенные строки» (если текст из PDF) и «Сверить с основной доверенностью». Почти все строки должны получить «полное совпадение»; строки с другим итогом показывают, где разметка разошлась с оригиналом. Исключение: пункт, внутри которого в оригинале стоит точка с запятой, сверяется по частям и получает «заявка уже пункта», это нормально.</li>
-      <li>Чтобы доверенность появилась у всех коллег, нажмите в «Доверенностях и бланках» <b>«Экспорт всех данных (JSON)»</b> и передайте этот файл вместе с PDF доверенности (без паспортных данных) тому, кто собирает конструктор. Доверенность встроят в следующую версию, и у коллег она появится в списке сама.</li>
+      <li>Если PDF это простой скан без текстового слоя, сначала распознайте его (например, в FineReader).</li>
+      <li>Откройте «Доверенности и бланки», нажмите <b>«Добавить из PDF»</b> или перетащите PDF в это окно.</li>
+      <li>Конструктор заполнит поля по тексту PDF: доверителя, кому выдана доверенность (он подписывает проекты передоверия), абзац о предмете, абзац об отмене, кому разрешено передоверие, срок. Найденное в PDF подсвечено желтым: проверьте окончания и реквизиты. Паспортные данные в поля не попадают.</li>
+      <li>Дату и номер в шапке обычно вписывают от руки, распознавание их не читает: впишите их сами. Срок «два года» и основание («доверенности от ... № ...») посчитаются от даты, название в списке тоже.</li>
+      <li>Полномочия размечаются сами: <code>==</code> блок, <code>##</code> раздел, остальные строки пункты. Справа PDF: зеленым найденные пункты, синим заголовки, <b>красным</b> текст PDF, не вошедший в разметку. Над PDF список того, что не сошлось: строки разметки, не найденные в PDF (слиплись два пункта или пункт разорван), и куски PDF вне разметки (пропущен пункт). Щелчок по строке разметки показывает ее в PDF, щелчок в PDF выделяет строку. Поправьте, пока не появится «Разметка совпадает с PDF».</li>
+      <li>Выберите бланк и нажмите «Сохранить доверенность». PDF привяжется к доверенности: проверка проекта, «PDF с пометками» и PDF на шаге 2 сразу работают по ней.</li>
+      <li>Чтобы доверенность появилась у всех коллег, нажмите <b>«Экспорт всех данных (JSON)»</b> и передайте файл тому, кто собирает конструктор. В файл входит разметка для скана (только координаты пунктов на страницах, без текста PDF и паспортных данных), сам PDF не передается. Коллеги один раз выбирают свой экземпляр PDF, подойдет и скан без текстового слоя, если это тот же скан.</li>
     </ol>
+    <p>Можно и вручную: «Добавить вручную» или «Копировать и изменить» у похожей доверенности, затем вставить текст полномочий и нажать «Разметить автоматически». Кнопка «Сверить с PDF» в редакторе подключает ту же сверку разметки по PDF.</p>
+    <h4>Удаление доверенностей и PDF</h4>
+    <ul>
+      <li>Добавленную доверенность удаляет кнопка «Удалить» в «Доверенностях и бланках»; привязанный к ней PDF удаляется вместе с ней.</li>
+      <li>Встроенную доверенность из файла удалить нельзя, ее можно <b>скрыть</b> из списков (например, когда она утратила силу) и вернуть кнопкой «Вернуть в списки».</li>
+      <li>У каждой доверенности видно, привязан ли PDF: его можно выбрать, заменить или удалить, не трогая саму доверенность.</li>
+    </ul>
     <h4>При смене основной доверенности</h4>
     <ul>
       <li>Черновики и проекты остаются привязанными к той доверенности, по которой сделаны. По новой доверенности проект собирается заново.</li>
@@ -5960,8 +5998,10 @@ let poaBlank = lsGet(LS.poaBlank, {});          // какой бланк у ка
 let ui = Object.assign({ open: {}, onlySelected: false, zoom: 'fit', expanded: {}, theme: 'auto' }, lsGet(LS.ui, {}));
 ui.editing = {};
 
-function allPoas() { return [...BUILTIN.map(p => Object.assign({}, p, { builtin: true })), ...userPoas]; }
-function getPoa(id) { return allPoas().find(p => p.id === id); }
+function allPoasAll() { return [...BUILTIN.map(p => Object.assign({}, p, { builtin: true })), ...userPoas]; }
+/* 3.6: встроенную доверенность можно скрыть из списков (ui.hiddenPoas); последнюю видимую скрыть нельзя */
+function allPoas() { const all = allPoasAll(); const h = new Set(ui.hiddenPoas || []); const v = all.filter(p => !h.has(p.id)); return v.length ? v : all; }
+function getPoa(id) { return allPoasAll().find(p => p.id === id); }
 
 const DEFAULT_OPTS = { font: 'Times New Roman', size: 12, ls: 1, indent: 1.25, gap: 6, boldName: true, boldHead: true, noSub: false, pageNum: true, pdBlank: true, skipActHead: true, nbsp: true };
 function newRep() { return { id: 'r' + uid(), nom: '', gender: 'm', genderTouched: false, acc: '', accTouched: false, pos: '' }; }
@@ -7006,16 +7046,25 @@ function bindDrafts() {
    ====================================================================== */
 let editingPoaId = null;
 function renderPoaList() {
-  $('#poaList').innerHTML = allPoas().map(p => {
+  const hidden = new Set(ui.hiddenPoas || []);
+  $('#poaList').innerHTML = allPoasAll().map(p => {
     const n = p.blocks.reduce((a, b) => a + b.sections.reduce((c, s) => c + s.items.length, 0), 0);
     const bl = blankList().find(b => b.id === blankIdFor(p.id));
-    return `<li><div class="main"><div class="t">${esc(p.name)} ${p.builtin ? '<span class="pill">встроена в файл</span>' : ''}</div><div class="s">№ ${esc(p.number)} от ${esc(fmtDateShort(p.date))}, по ${esc(fmtDateShort(p.validUntil))}, ${n} ${plural(n, 'полномочие', 'полномочия', 'полномочий')}; бланк: ${esc(bl ? bl.name : '?')}</div></div>
+    const hid = hidden.has(p.id);
+    return `<li${hid ? ' class="hid"' : ''}><div class="main"><div class="t">${esc(p.name)} ${p.builtin ? '<span class="pill">встроена в файл</span>' : ''}${hid ? ' <span class="pill">скрыта</span>' : ''}</div><div class="s">№ ${esc(p.number)} от ${esc(fmtDateShort(p.date))}, по ${esc(fmtDateShort(p.validUntil))}, ${n} ${plural(n, 'полномочие', 'полномочия', 'полномочий')}; бланк: ${esc(bl ? bl.name : '?')}</div>
+        <div class="s poa-pdf" data-pdfst="${esc(p.id)}">PDF: ...</div></div>
       <div class="tools">
-        <button type="button" class="btn small" data-use="${esc(p.id)}">Использовать</button>
+        ${hid ? '' : `<button type="button" class="btn small" data-use="${esc(p.id)}">Использовать</button>`}
         <button type="button" class="btn small" data-edit="${esc(p.id)}">${p.builtin ? 'Копировать и изменить' : 'Изменить'}</button>
-        ${p.builtin ? '' : `<button type="button" class="btn small danger" data-remove="${esc(p.id)}">Удалить</button>`}
+        ${p.builtin ? (hid ? `<button type="button" class="btn small" data-unhide="${esc(p.id)}">Вернуть в списки</button>` : `<button type="button" class="btn small" data-hide="${esc(p.id)}" title="Встроенную доверенность удалить из файла нельзя: она скрывается из списков в этом браузере">Скрыть</button>`) : `<button type="button" class="btn small danger" data-remove="${esc(p.id)}">Удалить</button>`}
       </div></li>`;
   }).join('');
+  // 3.6: привязанный PDF у каждой доверенности: выбрать, заменить или удалить
+  for (const p of allPoasAll()) pdfGet(p.id).then(r => {
+    const el = $(`.poa-pdf[data-pdfst="${CSS.escape(p.id)}"]`); if (!el) return;
+    el.innerHTML = r ? `PDF: ${esc(r.name)}${r.kept ? '' : ' (до перезагрузки страницы)'} <button type="button" class="ck-link" data-pdfpick="${esc(p.id)}">заменить</button> <button type="button" class="ck-link danger" data-pdfdel="${esc(p.id)}">удалить PDF</button>`
+      : `PDF не привязан${p.pdfMap ? ' (есть разметка для скана)' : ''} <button type="button" class="ck-link" data-pdfpick="${esc(p.id)}">выбрать PDF</button>`;
+  });
 }
 function renderBlankInfo() { renderBlankSelect(); renderBlankList(); }
 function structToMarkup(blocks) {
@@ -7086,18 +7135,33 @@ function peStats() {
   $('#pe_stats').textContent = `${blocks.length} ${plural(blocks.length, 'блок', 'блока', 'блоков')}, ${ns} ${plural(ns, 'раздел', 'раздела', 'разделов')}, ${ni} ${plural(ni, 'пункт', 'пункта', 'пунктов')}`;
 }
 const PE_FIELDS = ['name', 'number', 'date', 'validUntil', 'principalBold', 'principal', 'signerGen', 'basis', 'delegationWord', 'scope', 'revocation', 'termTemplate', 'signerTitle', 'signerShort', 'subDelegation', 'note'];
-function openPoaEditor(p, asCopy) {
+function openPoaEditor(p, asCopy, guess, rec) {
   const base = p ? JSON.parse(JSON.stringify(p)) : null;
-  const tpl = base || Object.assign({}, BUILTIN[0] || {}, { name: '', number: '', date: '', validUntil: '', blocks: [], note: '' });
+  // 3.6: из PDF поля заполняются по тексту доверенности, а не по встроенной
+  const tpl = guess ? Object.assign({ blocks: [] }, guess) : base || Object.assign({}, BUILTIN[0] || {}, { name: '', number: '', date: '', validUntil: '', blocks: [], note: '' });
   editingPoaId = (base && !asCopy) ? base.id : null;
-  $('#poaEditTitle').textContent = editingPoaId ? 'Изменение основной доверенности' : (asCopy ? 'Копия основной доверенности' : 'Новая основная доверенность');
-  for (const f of PE_FIELDS) $('#pe_' + f).value = (asCopy && f === 'name') ? (tpl.name + ' (копия)') : (tpl[f] || '');
-  $('#pe_text').value = structToMarkup(tpl.blocks || []);
+  $('#poaEditTitle').textContent = guess ? 'Новая основная доверенность из PDF' : editingPoaId ? 'Изменение основной доверенности' : (asCopy ? 'Копия основной доверенности' : 'Новая основная доверенность');
+  for (const f of PE_FIELDS) { $('#pe_' + f).value = (asCopy && f === 'name') ? (tpl.name + ' (копия)') : (tpl[f] || ''); $('#pe_' + f).classList.toggle('guessed', !!(guess && guess.guessed.includes(f))); }
+  const missing = guess ? ['date', 'number', 'validUntil', 'signerGen', 'scope'].filter(f => !tpl[f]) : [];
+  missing.forEach(f => $('#pe_' + f).classList.add('need'));
+  ['date', 'number', 'validUntil'].forEach(f => { if (!missing.includes(f)) $('#pe_' + f).classList.remove('need'); });
+  $('#peGuessNote').hidden = !guess;
+  if (guess) $('#peGuessNote').innerHTML = `Поля заполнены по тексту PDF. Желтым подсвечено найденное в PDF: проверьте окончания и реквизиты. ${missing.length ? `<b>Впишите сами</b> (в PDF не прочиталось): ${missing.map(f => ({ date: 'дата выдачи', number: 'номер', validUntil: 'срок', signerGen: 'подписант', scope: 'абзац о предмете' })[f]).join(', ')}. Дату и номер в шапке обычно вписывают от руки, распознавание их не читает.` : ''}`;
+  $('#pe_text').value = guess ? (tpl.markup || '') : structToMarkup(tpl.blocks || []);
   $('#dlgPoaEdit').dataset.oldBlocks = JSON.stringify(tpl.blocks || []);
   $('#dlgPoaEdit').dataset.extra = JSON.stringify({ unitDefault: tpl.unitDefault || '' });
-  fillBlankOptions($('#pe_blank'), base ? blankIdFor(base.id) : 'plain');
+  $('#dlgPoaEdit').dataset.oldMap = JSON.stringify(base && !asCopy && base.pdfMap ? base.pdfMap : null);
+  $('#dlgPoaEdit').dataset.auto = JSON.stringify(guess ? { agentShort: guess.agentShort || '', name: tpl.name, basis: tpl.basis || '' } : {});
+  pe.years = guess ? guess.termYears || null : null;
+  // 3.6: бланк новой доверенности из PDF как у доверенности того же доверителя
+  const same = guess && allPoasAll().find(x => normText(x.principalBold) === normText(guess.principalBold || '-'));
+  fillBlankOptions($('#pe_blank'), base ? blankIdFor(base.id) : same ? blankIdFor(same.id) : 'plain');
   peStats();
+  peReset();
   $('#dlgPoaEdit').showModal();
+  // PDF для сверки разметки: из PDF, по которому заполнено, или уже привязанный к этой доверенности
+  if (rec) peAttach(rec);
+  else if (base) pdfGet(base.id).then(r => { if (r && $('#dlgPoaEdit').open) peAttach(r); });
 }
 function bindPoas() {
   $('#btnPoas').addEventListener('click', () => { renderPoaList(); renderBlankInfo(); $('#dlgPoas').showModal(); });
@@ -7105,13 +7169,37 @@ function bindPoas() {
     const b = e.target.closest('button'); if (!b) return;
     if (b.dataset.use) { $('#dlgPoas').close(); switchPoa(b.dataset.use); }
     if (b.dataset.edit) { const p = getPoa(b.dataset.edit); openPoaEditor(p, !!p.builtin); }
-    if (b.dataset.remove) { if (!confirm('Удалить доверенность из списка? Черновики по ней перестанут открываться.')) return; userPoas = userPoas.filter(x => x.id !== b.dataset.remove); lsSet(LS.poas, userPoas); if (state.poaId === b.dataset.remove) switchPoa(allPoas()[0].id, true); renderPoaList(); renderPoaSelect(); }
+    if (b.dataset.remove) {
+      if (!confirm('Удалить доверенность из конструктора вместе с привязанным к ней PDF? Черновики по ней перестанут открываться. Отменить удаление нельзя, но доверенность можно вернуть импортом из экспорта данных.')) return;
+      const id = b.dataset.remove;
+      userPoas = userPoas.filter(x => x.id !== id); lsSet(LS.poas, userPoas);
+      delete poaBlank[id]; lsSet(LS.poaBlank, poaBlank); pdfForget(id);   // 3.6: PDF удаляется вместе с доверенностью
+      if (state.poaId === id) switchPoa(allPoas()[0].id, true);
+      renderPoaList(); renderPoaSelect(); toast('Доверенность удалена');
+    }
+    // 3.6: встроенную доверенность нельзя удалить из файла, ее можно скрыть из списков
+    if (b.dataset.hide) {
+      const h = new Set(ui.hiddenPoas || []); h.add(b.dataset.hide);
+      if (!allPoasAll().some(x => !h.has(x.id))) { toast('Последнюю основную доверенность скрыть нельзя'); return; }
+      ui.hiddenPoas = [...h]; lsSet(LS.ui, ui);
+      if (state.poaId === b.dataset.hide) switchPoa(allPoas()[0].id, true);
+      renderPoaList(); renderPoaSelect(); toast('Доверенность скрыта из списков');
+    }
+    if (b.dataset.unhide) { ui.hiddenPoas = (ui.hiddenPoas || []).filter(x => x !== b.dataset.unhide); lsSet(LS.ui, ui); renderPoaList(); renderPoaSelect(); }
+    if (b.dataset.pdfpick) { const inp = $('#poaRowPdf'); inp.dataset.poa = b.dataset.pdfpick; inp.click(); }
+    if (b.dataset.pdfdel) { if (!confirm('Удалить PDF этой доверенности из браузера? Сама доверенность останется.')) return; pdfForget(b.dataset.pdfdel).then(() => { renderPoaList(); ckPvSync(true); subPvSync(true); toast('PDF удален'); }); }
   });
   $('#btnPoaAdd').addEventListener('click', () => openPoaEditor(null, false));
+  $('#poaRowPdf').addEventListener('change', async e => {
+    const f = e.target.files[0], id = e.target.dataset.poa; e.target.value = ''; if (!f || !id) return;
+    if (!/\.pdf$/i.test(f.name)) { toast('Нужен файл PDF'); return; }
+    await pdfPut(id, { name: f.name, size: f.size, at: Date.now(), data: await f.arrayBuffer() }, true);
+    renderPoaList(); ckPvSync(true); subPvSync(true); toast('PDF привязан к доверенности');
+  });
   $('#pe_text').addEventListener('input', debounce(peStats, 200));
   $('#btnAutoMarkup').addEventListener('click', () => { $('#pe_text').value = autoMarkup($('#pe_text').value); peStats(); });
   $('#btnJoinLines').addEventListener('click', () => { $('#pe_text').value = joinWrapped($('#pe_text').value); peStats(); });
-  $('#btnPoaSave').addEventListener('click', () => {
+  $('#btnPoaSave').addEventListener('click', async () => {
     const p = Object.assign({}, JSON.parse($('#dlgPoaEdit').dataset.extra || '{}'));
     for (const f of PE_FIELDS) p[f] = $('#pe_' + f).value.trim();
     if (!p.name) { toast('Укажите название'); $('#pe_name').focus(); return; }
@@ -7120,13 +7208,23 @@ function bindPoas() {
     p.blocks = markupToStruct($('#pe_text').value, old);
     if (!p.blocks.length || !p.blocks.some(b => b.sections.some(s => s.items.length))) { toast('Нет ни одного полномочия'); return; }
     p.id = editingPoaId || ('poa-' + uid());
+    // 3.6: разметка для скана без текстового слоя (координаты пунктов, без текста PDF) и привязка PDF
+    if (pe.W) {
+      const L = pdfLocate(p, pe.W);
+      if (L.found >= Math.max(1, L.total * 0.6)) p.pdfMap = pdfMakeMap(L, pe.W.pages);
+      await pdfPut(p.id, pe.rec, true);
+    } else {
+      const om = JSON.parse($('#dlgPoaEdit').dataset.oldMap || 'null');
+      if (om) { const ids = new Set(p.blocks.flatMap(b => b.sections.flatMap(s => s.items.map(it => it.id)))); om.items = Object.fromEntries(Object.entries(om.items).filter(([k]) => ids.has(k))); p.pdfMap = om; }
+    }
     const idx = userPoas.findIndex(x => x.id === p.id);
     if (idx >= 0) userPoas[idx] = p; else userPoas.push(p);
     lsSet(LS.poas, userPoas);
     poaBlank[p.id] = $('#pe_blank').value; lsSet(LS.poaBlank, poaBlank); blank.id = null;
     $('#dlgPoaEdit').close(); renderPoaList(); renderPoaSelect();
     if (state.poaId === p.id) { renderPoaCard(); renderPowers(); afterChange(); } else switchPoa(p.id, selectedCount() === 0);
-    toast('Доверенность сохранена');
+    toast(pe.W ? 'Доверенность сохранена, PDF привязан к ней' : 'Доверенность сохранена');
+    peReset();
   });
   $('#btnPoaExport').addEventListener('click', () => {
     const data = { app: 'dovk', version: 3, appVersion: APP_VERSION, exportedAt: new Date().toISOString(), poas: userPoas, drafts, blanks, poaBlank, ckRules, mk };
@@ -7161,8 +7259,9 @@ function bindPoas() {
 /* ПРАВИЛО ДОРАБОТКИ: при каждом изменении конструктора повышается APP_VERSION, в APP_CHANGES добавляется строка,
    а в APP_FEATURES дописывается или правится возможность с номером версии, с которой она есть.
    Вкладки «Возможности ПО» и «Версии» в справке строятся из этих перечней. */
-const APP_VERSION = '3.5';
+const APP_VERSION = '3.6';
 const APP_CHANGES = [
+  ['3.6', '26.10.2026', 'новая основная доверенность добавляется из PDF: поля, срок и полномочия заполняются по тексту, разметка сразу сверяется с PDF (найденное закрашено, потерянное и лишнее перечислено), PDF привязывается к доверенности; в экспорт входит разметка для скана без текста PDF; встроенную доверенность можно скрыть из списков, PDF у каждой доверенности можно выбрать, заменить или удалить, вместе с доверенностью удаляется и ее PDF; при чтении PDF восстанавливаются слова, разорванные переносом по дефису'],
   ['3.5', '26.10.2026', 'в проверке проекта в положении «Все пункты в PDF» страницы PDF занимают не меньше половины высоты правой панели: блок сравнения абзаца и панель «PDF с пометками» над ними сжимаются и прокручиваются отдельно; раньше при длинном сравнении PDF почти не было видно и его нельзя было прокрутить'],
   ['3.4', '26.10.2026', 'в проверке проекта над основной доверенностью один переключатель на три положения: «Все пункты», «Пункты, вошедшие в проект», «Все пункты в PDF»; раньше фильтр «Только переданные» был отдельной кнопкой и не снимался нажатием на «Пункты»'],
   ['3.3', '26.10.2026', 'PDF основной доверенности прямо в конструкторе: в проверке проекта переключатель «Пункты / PDF» над основной доверенностью, на шаге 2 переключатель «Проект / PDF основной» над документом; щелчок по абзацу проекта или по полномочию в списке прокручивает PDF к пункту и обводит его рамкой, щелчок по пункту в PDF показывает его в проекте или в списке; пункты в PDF закрашены по статусу (в проверке) или по выбору и правкам (на шаге 2); PDF выбирается один раз и запоминается для каждой основной доверенности'],
@@ -7257,6 +7356,13 @@ const APP_FEATURES = [
     ['Переключатель «Проект / PDF основной» над документом: справа страницы самой основной доверенности, выбранные полномочия закрашены (зеленым без правок, синим суженные, желтым с добавлениями или снятым ограничением)', '3.3'],
     ['Щелчок по полномочию в списке прокручивает PDF к нему и обводит рамкой; щелчок по пункту в PDF находит его в списке', '3.3'],
     ['Тот же PDF, что в проверке проекта: выбирается один раз для основной доверенности и запоминается в этом браузере; PDF можно перетащить на просмотр', '3.3'],
+  ]],
+  ['Новая основная доверенность из PDF', [
+    ['«Добавить из PDF» или перетаскивание PDF в «Доверенности и бланки»: доверитель, кому выдана, абзац о предмете и об отмене, кому разрешено передоверие, срок и полномочия заполняются по тексту PDF; паспортные данные не попадают в поля', '3.6'],
+    ['Дата и номер, вписанные от руки, вводятся вручную; срок «два года», основание и название в списке считаются от них', '3.6'],
+    ['Сверка разметки по PDF прямо в редакторе: найденные пункты и заголовки закрашены, строки разметки, не найденные в PDF, и текст PDF вне разметки перечислены; щелчок по строке показывает ее в PDF и наоборот; то же кнопкой «Сверить с PDF» для любой доверенности', '3.6'],
+    ['При сохранении PDF привязывается к доверенности, а в ее данные пишется разметка для скана (координаты пунктов); она входит в экспорт и позволяет встроить доверенность для всех коллег', '3.6'],
+    ['Удаление добавленной доверенности вместе с ее PDF, скрытие встроенной доверенности из списков, выбор, замена и удаление PDF у каждой доверенности', '3.6'],
   ]],
   ['Проверки', [
     ['Срок не позже срока основной доверенности (п. 4 ст. 187 ГК РФ)', '1.0'],
@@ -7876,6 +7982,7 @@ async function ckReadPdf(buf) {
     geo[p] = ls.length >= 4 ? { left: pct(ls.map(l => l.x0), 0.1), right: pct(ls.map(l => l.x1), 0.9) } : gl;
   }
   const paras = []; let cur = null, prev = null;
+  const dict = pdfHyphenDict(lines.map(l => l.text));   // 3.6
   for (const l of lines) {
     if (/^[-–—]?\s*\d{1,3}\s*[-–—]?$/.test(l.text)) continue;   // номер страницы
     const g = geo[l.page];
@@ -7891,17 +7998,34 @@ async function ckReadPdf(buf) {
       else if (l.page !== prev.page && prevEnd && l.x0 - g.left > 3) brk = true;
     }
     if (brk) { if (cur) paras.push(cur); cur = l.text; }
-    else cur = ckJoinLine(cur, l.text);
+    else cur = ckJoinLine(cur, l.text, dict);
     prev = l;
   }
   if (cur) paras.push(cur);
   return { paras, pages: doc.numPages, chars };
 }
 /* склейка перенесенной строки: перенос по дефису («материально-|технических», «50-|014») и мягкий перенос без пробела */
-function ckJoinLine(cur, next) {
+function ckJoinLine(cur, next, dict) {
   if (/[\p{L}\p{N}]\u00ad$/u.test(cur)) return cur.slice(0, -1) + '-' + next;
   if (/[\p{L}\p{N}][-‐]$/u.test(cur) && /^[\p{L}\p{N}]/u.test(next)) return cur + next;
+  // 3.6: распознавание часто теряет перенос по дефису в конце строки («санитарно» + «эпидемиологической»):
+  // слово восстанавливается, если такое же написание есть в этом PDF или в основных доверенностях конструктора
+  if (dict) {
+    const a = cur.match(/(\p{L}+)$/u), b = next.match(/^(\p{Ll}+)/u);
+    if (a && b) {
+      const A = normTok(a[1]), B = normTok(b[1]);
+      if (dict.hyph.has(A + '-' + B)) return cur + '-' + next;
+      if (dict.words.has(A + B) && (!dict.words.has(A) || !dict.words.has(B))) return cur + next;
+    }
+  }
   return cur + ' ' + next;
+}
+function pdfHyphenDict(texts) {
+  const hyph = new Set(), words = new Set();
+  const add = t => { for (const m of String(t || '').toLowerCase().matchAll(/\p{L}+(?:-\p{L}+)*/gu)) { const w = m[0].replace(/ё/g, 'е'); if (w.includes('-')) { hyph.add(w); w.split('-').forEach(x => words.add(x)); } else words.add(w); } };
+  texts.forEach(add);
+  for (const p of allPoasAll()) for (const b of p.blocks) { add(b.title); for (const s of b.sections) { add(s.heading); for (const it of s.items) add(it.text); } }
+  return { hyph, words };
 }
 /* текст (вставка, TXT, абзац DOCX с переносами строк) -> абзацы:
    пустая строка или маркер в начале строки начинают новый абзац; строка без знака в конце продолжается следующей */
@@ -8923,7 +9047,7 @@ function pdfLocate(poa, W) {
       if (li < Ls.length - 1) { let j = L.jz; while (j + 1 < W.words.length && W.words[j + 1].line === W.words[L.jz].line && W.words[j + 1].q !== L.z.q && gapOk(L.z, W.words[j + 1])) { j++; L.z = W.words[j]; } }
       if (li > 0) { let j = L.ja; while (j - 1 >= 0 && W.words[j - 1].line === W.words[L.ja].line && W.words[j - 1].q !== L.a.q && gapOk(W.words[j - 1], L.a)) { j--; L.a = W.words[j]; } }
     });
-    out[it.id] = { score: Math.round(a.score * 100) / 100, rects: [...lines.values()].map(L => ({ p: L.p, q: [L.a.q[0], L.a.q[1], L.z.q[2], L.z.q[3], L.a.q[4], L.a.q[5], L.z.q[6], L.z.q[7]] })) };
+    out[it.id] = { hit: a.hit, score: Math.round(a.score * 100) / 100, rects: [...lines.values()].map(L => ({ p: L.p, q: [L.a.q[0], L.a.q[1], L.z.q[2], L.z.q[3], L.a.q[4], L.a.q[5], L.z.q[6], L.z.q[7]] })) };
   }
   return { items: out, found, total };
 }
@@ -8981,8 +9105,9 @@ async function pdfForget(poaId) { delete pdfMem[poaId]; try { await pdfDbDo('rea
 
 /* разбор PDF основной доверенности: где пункты (кэш на сессию, от проекта не зависит) */
 const pdfLocCache = {};
+function poaSig(poa) { let h = 0; const t = JSON.stringify(poa.blocks || []); for (let i = 0; i < t.length; i++) h = (h * 31 + t.charCodeAt(i)) | 0; return h.toString(36) + t.length; }
 async function pdfLocateFile(poa, rec) {
-  const key = poa.id + '|' + rec.name + '|' + rec.size + '|' + rec.at;
+  const key = poa.id + '|' + poaSig(poa) + '|' + rec.name + '|' + rec.size + '|' + rec.at;   // 3.6: разметка меняется: место пунктов ищется заново
   if (pdfLocCache[key]) return pdfLocCache[key];
   const lib = await loadPdfjs();
   const doc = await lib.getDocument({ data: new Uint8Array(rec.data.slice(0)), isEvalSupported: false, disableFontFace: true, useSystemFonts: false, verbosity: 0 }).promise;
@@ -9126,6 +9251,8 @@ async function ckPdfLoad(f) {
 }
 /* для встраивания доверенности в файл (README): разметка pdfMap по распознанной копии PDF, вызывается из консоли */
 window.dovkTools = {
+  readPdf: buf => ckReadPdf(buf),
+  rawItems: async (buf, pn) => { const lib = await loadPdfjs(); const d = await lib.getDocument({ data: new Uint8Array(buf), verbosity: 0 }).promise; const pg = await d.getPage(pn); const tc = await pg.getTextContent(); return tc.items.map(i => [i.str, i.transform.map(v => Math.round(v * 10) / 10), Math.round(i.width * 10) / 10, i.hasEOL]); },
   limitCheck: (orig, text) => limitLoss(diffWords(orig, text, ckTokens)),
   async pdfMap(poaId, buf) {
     const poa = getPoa(poaId); if (!poa) throw new Error('нет доверенности ' + poaId);
@@ -9159,44 +9286,55 @@ function bindCkPdf() {
    используется в проверке проекта и на шаге 2 проекта передоверия
    ====================================================================== */
 function makePdfView(host, o) {
-  const st = { poaId: null, key: null, loc: null, marks: {}, sel: null, token: 0, width: 0, io: null };
-  const msg = html => { host.innerHTML = `<div class="pv-msg">${html}</div>`; st.key = null; };
+  // fileKey: какой файл и при какой ширине нарисован (холсты страниц); пометки пересобираются отдельно, без перерисовки страниц
+  const st = { poaId: null, key: null, fileKey: null, loc: null, marks: {}, sel: null, token: 0, width: 0, io: null, pages: [] };
+  const msg = html => { if (st.io) st.io.disconnect(); host.innerHTML = `<div class="pv-msg">${html}</div>`; st.key = st.fileKey = null; st.pages = []; };
+  function buildMarks() {
+    for (const P of st.pages) {
+      const layer = P.div.querySelector('.pv-marks'); layer.textContent = '';
+      for (const id in st.loc.items) for (const r of st.loc.items[id].rects) if (r.p === P.n) {
+        const xs = [], ys = [];
+        for (let i = 0; i < 8; i += 2) { const [x, y] = P.vp.convertToViewportPoint(r.q[i], r.q[i + 1]); xs.push(x); ys.push(y); }
+        const m = document.createElement('div'); m.className = 'pv-m'; m.dataset.item = id;
+        m.style.left = (Math.min(...xs) - 2) + 'px'; m.style.top = (Math.min(...ys) - 1) + 'px';
+        m.style.width = (Math.max(...xs) - Math.min(...xs) + 4) + 'px'; m.style.height = (Math.max(...ys) - Math.min(...ys) + 2) + 'px';
+        layer.appendChild(m);
+      }
+    }
+  }
   async function open(poa, force) {
     if (!poa) { msg('Нет основной доверенности'); return; }
-    const rec = await pdfGet(poa.id);
+    const src = o.source ? await o.source(poa) : null;   // 3.6: редактор разметки дает свой PDF и свою разметку
+    const rec = src ? src.rec : await pdfGet(poa.id);
     if (!rec) { st.poaId = poa.id; msg(o.emptyHtml(poa)); return; }
-    const key = poa.id + '|' + rec.name + '|' + rec.size + '|' + rec.at;
     const w = Math.max(200, host.clientWidth - 28);
-    if (!force && st.key === key && Math.abs(w - st.width) < 2) { apply(); return; }
+    const fileKey = rec.name + '|' + rec.size + '|' + rec.at + '|' + Math.round(w);
+    const key = (src ? 'src' + src.v + '|' : '') + poa.id + '|' + poaSig(poa) + '|' + fileKey;
+    if (!force && st.key === key) { apply(); return; }
     const tok = ++st.token;
-    if (st.key !== key) msg('Открываю PDF и ищу в нем пункты...');
+    if (st.fileKey !== fileKey) msg('Открываю PDF и ищу в нем пункты...');
     let loc;
-    try { loc = await pdfLocateFile(poa, rec); } catch (e) { console.error(e); msg(`Не удалось открыть PDF: ${esc(e.message)}`); return; }
+    try { loc = src ? src.loc : await pdfLocateFile(poa, rec); } catch (e) { console.error(e); msg(`Не удалось открыть PDF: ${esc(e.message)}`); return; }
     if (tok !== st.token) return;
     if (loc.mode === 'noText') { msg(`В PDF «${esc(rec.name)}» нет текстового слоя: пункты в нем не найти. Распознайте файл и выберите его снова. ${o.otherHtml}`); return; }
     if (loc.mode === 'mapPages') { msg(`В PDF «${esc(rec.name)}» нет текстового слоя, а разметка встроенной доверенности сделана для другого числа страниц. ${o.otherHtml}`); return; }
     st.poaId = poa.id; st.key = key; st.loc = loc; st.width = w;
+    // тот же файл и та же ширина: страницы остаются, меняются только пометки
+    if (!force && st.fileKey === fileKey && st.pages.length) { buildMarks(); apply(); if (st.sel) show(st.sel, false); return; }
     if (st.io) st.io.disconnect();
-    const doc = loc.doc, pages = [];
-    const head = `<div class="pv-head"><span>${esc(rec.name)}: найдено ${loc.found} из ${loc.total} ${plural(loc.total, 'пункта', 'пунктов', 'пунктов')}${loc.mode === 'map' ? ', скан без текстового слоя (разметка встроенной доверенности)' : ''}</span>${o.otherHtml}</div>`;
-    host.innerHTML = head;
+    const doc = loc.doc; st.pages = [];
+    host.innerHTML = src ? '' : `<div class="pv-head"><span>${esc(rec.name)}: найдено ${loc.found} из ${loc.total} ${plural(loc.total, 'пункта', 'пунктов', 'пунктов')}${loc.mode === 'map' ? ', скан без текстового слоя (разметка встроенной доверенности)' : ''}</span>${o.otherHtml}</div>`;
     // все страницы сразу получают размер, рисуются только видимые
     for (let p = 1; p <= doc.numPages; p++) {
       const page = await doc.getPage(p); if (tok !== st.token) return;
       const vp = page.getViewport({ scale: w / page.getViewport({ scale: 1 }).width });
       const div = document.createElement('div'); div.className = 'pv-page'; div.dataset.p = p;
       div.style.width = vp.width + 'px'; div.style.height = vp.height + 'px';
-      const marks = document.createElement('div'); marks.className = 'pv-marks';
-      for (const id in loc.items) for (const r of loc.items[id].rects) if (r.p === p) {
-        const xs = [], ys = [];
-        for (let i = 0; i < 8; i += 2) { const [x, y] = vp.convertToViewportPoint(r.q[i], r.q[i + 1]); xs.push(x); ys.push(y); }
-        const m = document.createElement('div'); m.className = 'pv-m'; m.dataset.item = id;
-        m.style.left = (Math.min(...xs) - 2) + 'px'; m.style.top = (Math.min(...ys) - 1) + 'px';
-        m.style.width = (Math.max(...xs) - Math.min(...xs) + 4) + 'px'; m.style.height = (Math.max(...ys) - Math.min(...ys) + 2) + 'px';
-        marks.appendChild(m);
-      }
-      div.appendChild(marks); host.appendChild(div); pages.push({ div, page, vp, done: false });
+      const layer = document.createElement('div'); layer.className = 'pv-marks'; div.appendChild(layer);
+      host.appendChild(div); st.pages.push({ n: p, div, page, vp, done: false });
     }
+    st.fileKey = fileKey;
+    buildMarks();
     const draw = async P => {
       if (P.done) return; P.done = true;
       const dpr = Math.min(2, window.devicePixelRatio || 1);
@@ -9206,8 +9344,8 @@ function makePdfView(host, o) {
       try { await P.page.render({ canvasContext: c.getContext('2d'), viewport: P.vp, transform: dpr !== 1 ? [dpr, 0, 0, dpr, 0, 0] : null }).promise; }
       catch (e) { console.error(e); }
     };
-    st.io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) draw(pages[Number(e.target.dataset.p) - 1]); }), { root: host, rootMargin: '800px 0px' });
-    pages.forEach(P => st.io.observe(P.div));
+    st.io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) draw(st.pages[Number(e.target.dataset.p) - 1]); }), { root: host, rootMargin: '800px 0px' });
+    st.pages.forEach(P => st.io.observe(P.div));
     apply();
     if (st.sel) show(st.sel, true);
   }
@@ -9215,7 +9353,7 @@ function makePdfView(host, o) {
     host.querySelectorAll('.pv-frame').forEach(f => f.remove());
     host.querySelectorAll('.pv-m').forEach(m => { m.className = 'pv-m' + (st.marks[m.dataset.item] ? ' m-' + st.marks[m.dataset.item] : '') + (m.dataset.item === st.sel ? ' sel' : ''); });
   }
-  function setMarks(marks) { st.marks = marks || {}; apply(); }
+  function setMarks(marks) { st.marks = marks || {}; apply(); if (st.sel) show(st.sel, false); }
   /* прокрутить к пункту и обвести его; false, если пункт в PDF не найден */
   function show(id, scroll = true) {
     st.sel = id || null; apply();
@@ -9234,15 +9372,15 @@ function makePdfView(host, o) {
     if (scroll) {
       const r = (host.querySelector('.pv-frame') || els[0]).getBoundingClientRect(), h = host.getBoundingClientRect();
       if (r.top < h.top + 30 || r.bottom > h.bottom - 30) host.scrollTo({ top: host.scrollTop + r.top - h.top - Math.min(120, h.height * 0.2), behavior: 'smooth' });
+      host.querySelectorAll('.pv-frame').forEach(e => { e.classList.remove('flash'); void e.offsetWidth; e.classList.add('flash'); });
     }
-    host.querySelectorAll('.pv-frame').forEach(e => { e.classList.remove('flash'); void e.offsetWidth; e.classList.add('flash'); });
     return true;
   }
   host.addEventListener('click', e => { const m = e.target.closest('.pv-m'); if (m && o.onPick) o.onPick(m.dataset.item); });
   // ширина панели изменилась: страницы перестраиваются
   let rt = null;
-  new ResizeObserver(() => { if (!st.key || host.hidden || !host.clientWidth) return; clearTimeout(rt); rt = setTimeout(() => { const poa = getPoa(st.poaId); if (poa && Math.abs(host.clientWidth - 28 - st.width) > 30) open(poa, true); }, 250); }).observe(host);
-  return { open, setMarks, show, reset() { st.key = null; st.token++; host.innerHTML = ''; }, get poaId() { return st.poaId; }, has: id => !!(st.loc && st.loc.items[id]) };
+  new ResizeObserver(() => { if (!st.key || host.hidden || !host.clientWidth) return; clearTimeout(rt); rt = setTimeout(() => { const poa = o.source ? o.poa && o.poa() : getPoa(st.poaId); if (poa && Math.abs(host.clientWidth - 28 - st.width) > 30) open(poa, true); }, 250); }).observe(host);
+  return { open, setMarks, show, reset() { if (st.io) st.io.disconnect(); st.key = st.fileKey = null; st.pages = []; st.token++; host.innerHTML = ''; }, get poaId() { return st.poaId; }, has: id => !!(st.loc && st.loc.items[id]) };
 }
 const PV_EMPTY = (pick, poa) => `<p><b>PDF основной доверенности ${esc(poa.number ? '№ ' + poa.number : '')} еще не выбран.</b></p>
   <p class="muted">Нужен PDF с текстовым слоем (распознанный); для встроенной доверенности подходит и скан без него. Файл не покидает компьютер и запоминается в этом браузере.</p>
@@ -9331,6 +9469,209 @@ function bindPdfViews() {
   ckView(ui.ckView === 'pdf' ? 'pdf' : 'all');
   $$('#pvSwitch button').forEach(b => b.setAttribute('aria-pressed', String((b.dataset.pv === 'pdf') === !!ui.subPdf)));
   document.body.classList.toggle('pv-pdf', !!ui.subPdf);
+}
+
+/* ======================================================================
+   3.6: новая основная доверенность из PDF. Поля преамбулы, срок и полномочия заполняются
+   по тексту PDF, разметка сразу сверяется с самим PDF (что найдено, что потерялось),
+   при сохранении PDF привязывается к доверенности, а разметка pdfMap пишется в ее данные
+   ====================================================================== */
+const RU_NUM = { один: 1, одного: 1, два: 2, двух: 2, три: 3, трех: 3, четыре: 4, четырех: 4, пять: 5, пяти: 5 };
+/* слово должности из винительного (родительного) падежа в именительный: «директора» -> «директор» */
+function posNom(w) {
+  const r = [[/ого$/, 'ый'], [/его$/, 'ий'], [/ителя$/, 'итель'], [/ника$/, 'ник'], [/ера$/, 'ер'], [/ора$/, 'ор'], [/ента$/, 'ент'], [/иста$/, 'ист'], [/ара$/, 'арь'], [/ача$/, 'ач'], [/яра$/, 'ярь'], [/а$/, '']];
+  for (const [re, to] of r) if (re.test(w)) return w.replace(re, to);
+  return w;
+}
+function surnameNom(w, fem) {
+  if (fem) return w.replace(/(ов|ев|ин|ын)у$/, '$1а').replace(/(ск|цк)ую$/, '$1ая').replace(/ую$/, 'ая').replace(/у$/, 'а');
+  return w.replace(/(ск|цк)ого$/, '$1ий').replace(/ого$/, 'ой').replace(/(ов|ев|ин|ын)а$/, '$1').replace(/я$/, 'й').replace(/а$/, '');
+}
+/* женское ФИО в винительном падеже -> родительный (для «в лице ...») */
+function femAccToGen(s) {
+  return s.split(' ').map(w => w.replace(/(ов|ев|ин|ын)у$/, '$1ой').replace(/(ск|цк)ую$/, '$1ой').replace(/ую$/, 'ой').replace(/(вн|чн)у$/, '$1ы').replace(/ю$/, 'и').replace(/у$/, 'ы')).join(' ');
+}
+function poaGuessFromPdf(paras, fileName) {
+  const all = paras.map(p => String(p || '').replace(/\s+/g, ' ').trim()).filter(Boolean);
+  const g = { guessed: [] };
+  const set = (k, v) => { v = String(v || '').trim(); if (v) { g[k] = v; g.guessed.push(k); } };
+  const iPre = all.findIndex(p => /уполномочива/i.test(p) && /в\s+лице/i.test(p));
+  const pre = iPre >= 0 ? all[iPre] : '';
+  if (pre) {
+    const i = pre.search(/,?\s+в\s+лице\s+/i);
+    const head = pre.slice(0, i).trim(), k = head.indexOf('(');
+    if (k > 0) { set('principalBold', head.slice(0, k)); set('principal', head.slice(k).replace(/[,\s]+$/, '')); } else set('principalBold', head);
+    // кому выдана основная доверенность: он подписывает проекты передоверия
+    const m = pre.match(/уполномочивает(?:\s*\([^)]*\))?\s*:?\s+(.+?)(?:\s*\(\s*паспорт|\s*\(_{2,}|,\s*представлять\s+интересы|\s*$)/i);
+    if (m) {
+      const agent = m[1].replace(/[,\s(]+$/, '');
+      const fio = agent.match(/([А-ЯЁ][а-яё]+(?:-[А-ЯЁ][а-яё]+)?)\s+([А-ЯЁ][а-яё]+)\s+([А-ЯЁ][а-яё]+)$/);
+      const fem = fio ? /(вн|чн)[уы]$/.test(fio[3]) : false;
+      set('signerGen', fem ? agent.slice(0, fio.index) + femAccToGen(fio[0]) : agent);
+      if (fio) {
+        set('signerShort', `${fio[2][0]}.${fio[3][0]}. ${surnameNom(fio[1], fem)}`);
+        const pos = agent.slice(0, fio.index).trim().split(' ');
+        const cut = pos.findIndex(w => /^(ООО|АО|ПАО|ОАО|ЗАО|НАО|«)/.test(w));
+        const p2 = (cut >= 0 ? pos.slice(0, cut) : pos).filter(Boolean);
+        let j = 0; while (j < p2.length && /(ого|его)$/.test(p2[j])) j++;
+        const title = p2.map((w, x) => x <= j ? posNom(w) : w).join(' ');
+        if (title) set('signerTitle', title[0].toUpperCase() + title.slice(1));
+        g.agentShort = `${surnameNom(fio[1], fem)} ${fio[2][0]}.${fio[3][0]}.`;
+      }
+    }
+  }
+  const iScope = all.findIndex((p, i) => i > iPre && /^представлять\s+интересы/i.test(p) && /:\s*$/.test(p));
+  if (iScope >= 0) set('scope', all[iScope]);
+  const iRev = all.findIndex(p => /^Сведения\s+об\s+отмене/i.test(p));
+  if (iRev >= 0) set('revocation', all[iRev]);
+  const sub = all.find(p => /с\s+правом\s+(последующего\s+)?передоверия/i.test(p) && p.length < 300 && !/в\s+лице/i.test(p));
+  if (sub) { const m = sub.match(/передоверия\s+(.+?)\.?\s*$/i); if (m) set('subDelegation', m[1]); }
+  // дата и номер в шапке часто вписаны от руки: берутся, только если распознаны
+  const top = all.slice(0, iPre >= 0 ? iPre : 6).join(' ');   // только шапка до преамбулы: в преамбуле дата и номер регистрации общества
+  const dm = top.match(/«?\s*(\d{1,2})\s*»?\s+(\d{1,2}|[а-я]{3,})\s+(20\d\d)\s*г/i);
+  if (dm) { const mon = /^\d/.test(dm[2]) ? Number(dm[2]) : RU_MONTHS.findIndex(x => dm[2].toLowerCase().startsWith(x)) + 1; if (mon >= 1 && mon <= 12) set('date', `${dm[3]}-${String(mon).padStart(2, '0')}-${String(dm[1]).padStart(2, '0')}`); }
+  const nm = top.match(/№\s*([0-9][0-9A-Za-zА-Яа-я/\-–]*)/); if (nm) set('number', nm[1]);
+  // срок: «сроком по 30 сентября 2028 года» или «Срок действия настоящей доверенности два года»
+  const term = all.find(p => /срок\s+действия|выдана\s+сроком|сроком\s+(по|на|до)|действительна\s+(по|до)/i.test(p) && p.length < 300 && !/в\s+лице/i.test(p));
+  if (term) {
+    const d = ckParseDate(term); if (d) set('validUntil', d);
+    const y = term.match(/(\d+|один|одного|два|двух|три|трех|четыре|четырех|пять|пяти)\s+(год|года|лет)/i);
+    if (!d && y) g.termYears = /^\d/.test(y[1]) ? Number(y[1]) : RU_NUM[y[1].toLowerCase()];
+  }
+  if (g.date && g.termYears && !g.validUntil) { const [yy, mm, dd] = g.date.split('-'); set('validUntil', `${Number(yy) + g.termYears}-${mm}-${dd}`); }
+  if (g.date && g.number) set('basis', `доверенности от ${fmtDateShort(g.date)} № ${g.number}`);
+  g.delegationWord = 'уполномочивает (в порядке передоверия)';
+  g.termTemplate = 'Доверенность выдана сроком по {ДАТА} включительно.';
+  g.name = `Доверенность${g.date ? ' от ' + fmtDateShort(g.date) : ''}${g.number ? ' № ' + g.number : ''}${g.agentShort ? ' (' + g.agentShort + ')' : ''}`;
+  g.note = `Добавлена из PDF «${fileName}»${g.agentShort ? `, выдана: ${g.agentShort}` : ''}`;
+  // дефис с пробелами по краям в тексте из PDF: в доверенностях это тире («(далее – Общество)»)
+  const dash = t => String(t).replace(/(\S) - (?=\S)/g, '$1 – ');
+  for (const k of ['principal', 'signerGen', 'scope', 'revocation', 'subDelegation']) if (g[k]) g[k] = dash(g[k]);
+  // полномочия: абзацы между абзацем о предмете и абзацем об отмене
+  const from = iScope >= 0 ? iScope + 1 : iPre + 1, to = iRev >= 0 ? iRev : all.length;
+  const body = all.slice(Math.max(0, from), to).filter(p => /[\p{L}]{2}/u.test(p) && !/^[-–—]?\s*\d{1,3}\s*[-–—]?$/.test(p));
+  g.markup = autoMarkup(body.map(p => String(p).replace(/(\S) - (?=\S)/g, '$1 – ')).join('\n'));
+  return g;
+}
+
+/* сверка разметки с PDF в редакторе основной доверенности */
+const pe = { rec: null, W: null, doc: null, v: 0, loc: null, years: null };
+let pePv = null;
+const PE_POA = { id: 'pe-edit', blocks: [] };
+function peReset() {
+  pe.rec = pe.W = pe.doc = pe.loc = null; pe.v++;
+  $('#dlgPoaEdit').classList.remove('pe-pdf'); $('#pePdfPane').hidden = true; $('#peVer').innerHTML = '';
+  if (pePv) pePv.reset();
+}
+async function peAttach(rec) {
+  $('#dlgPoaEdit').classList.add('pe-pdf'); $('#pePdfPane').hidden = false;
+  $('#peVer').innerHTML = '<p class="muted">Читаю PDF...</p>';
+  try {
+    const lib = await loadPdfjs();
+    const doc = await lib.getDocument({ data: new Uint8Array(rec.data.slice(0)), isEvalSupported: false, disableFontFace: true, useSystemFonts: false, verbosity: 0 }).promise;
+    const W = await pdfWords(doc);
+    if (W.chars < 200) { peReset(); toast('В этом PDF нет текстового слоя: распознайте его (например, в FineReader) и выберите снова'); return false; }
+    pe.rec = rec; pe.doc = doc; pe.W = W;
+    peVerify();
+    return true;
+  } catch (e) { console.error(e); peReset(); toast('Не удалось прочитать PDF: ' + e.message); return false; }
+}
+function peEntries() {
+  const out = [];
+  $('#pe_text').value.split('\n').forEach((raw, i) => {
+    const l = raw.trim(); if (!l) return;
+    const kind = l.startsWith('==') ? 'block' : (l.startsWith('##') || l.startsWith('•')) ? 'head' : 'item';
+    const text = cleanEnd(l.replace(/^(==|##|•)/, '').replace(/^[-–—•]\s*/, '').replace(/\s+/g, ' '));
+    if (text.length > 1) out.push({ id: 'L' + i, line: i, kind, text });
+  });
+  return out;
+}
+function peVerify() {
+  if (!pe.W) return;
+  const E = peEntries();
+  const loc = pdfLocate({ blocks: [{ sections: [{ items: E.map(e => ({ id: e.id, text: e.text })) }] }] }, pe.W);
+  loc.doc = pe.doc; loc.mode = 'text'; loc.pages = pe.W.pages.length;
+  // текст PDF между первой и последней найденной строкой, не вошедший ни в одну строку разметки
+  const hit = new Set(); let lo = Infinity, hi = -1;
+  for (const id in loc.items) for (const j of loc.items[id].hit) { hit.add(j); if (j < lo) lo = j; if (j > hi) hi = j; }
+  const runs = []; let cur = [];
+  const flush = () => { if (cur.filter(j => /[\p{L}]{2}/u.test(pe.W.words[j].t)).length >= 3) runs.push(cur); cur = []; };
+  for (let j = lo; j <= hi; j++) { if (hit.has(j)) flush(); else cur.push(j); }
+  flush();
+  runs.forEach((r, k) => {
+    const lines = new Map();
+    for (const j of r) { const w = pe.W.words[j]; const L = lines.get(w.line); if (!L) lines.set(w.line, { p: w.p, a: w, z: w }); else L.z = w; }
+    loc.items['U' + k] = { hit: r, text: r.map(j => pe.W.words[j].t).join(' '), rects: [...lines.values()].map(L => ({ p: L.p, q: [L.a.q[0], L.a.q[1], L.z.q[2], L.z.q[3], L.a.q[4], L.a.q[5], L.z.q[6], L.z.q[7]] })) };
+  });
+  pe.loc = loc; pe.v++;
+  const miss = E.filter(e => !loc.items[e.id]);
+  const its = E.filter(e => e.kind === 'item'), heads = E.filter(e => e.kind !== 'item');
+  const fi = its.filter(e => loc.items[e.id]).length, fh = heads.filter(e => loc.items[e.id]).length;
+  const ok = !miss.length && !runs.length && its.length;
+  $('#peVer').innerHTML = `<div class="pe-ver-h ${ok ? 'ok' : 'warn'}">${ok ? ic('check') : ic('alert')}<span>${ok ? 'Разметка совпадает с PDF: все строки найдены, лишнего текста нет.' : 'Разметку нужно поправить: ниже, что не сошлось.'}</span></div>
+    <div class="pe-ver-s">В PDF найдено пунктов: <b>${fi}</b> из ${its.length}, заголовков: ${fh} из ${heads.length}. Зеленым в PDF пункты, синим заголовки, <span class="err-t">красным</span> текст, не вошедший в разметку. Щелчок по строке слева или по месту в PDF показывает пару.</div>
+    ${miss.length ? `<div class="pe-ver-l"><b>Строки разметки, не найденные в PDF (${miss.length}):</b> слиплись два пункта, пункт разорван или текст изменен.<ul>${miss.slice(0, 30).map(e => `<li><button type="button" class="ck-link" data-peline="${e.line}">строка ${e.line + 1}</button> ${esc(e.text.slice(0, 120))}${e.text.length > 120 ? '...' : ''}</li>`).join('')}</ul></div>` : ''}
+    ${runs.length ? `<div class="pe-ver-l"><b>Текст PDF, не вошедший в разметку (${runs.length}):</b> пропущен пункт или заголовок.<ul>${runs.slice(0, 30).map((r, k) => { const t = loc.items['U' + k].text; return `<li><button type="button" class="ck-link" data-peu="U${k}">показать</button> ${esc(t.slice(0, 120))}${t.length > 120 ? '...' : ''}</li>`; }).join('')}</ul></div>` : ''}`;
+  const marks = {};
+  for (const e of E) if (loc.items[e.id]) marks[e.id] = e.kind === 'item' ? 'ok' : 'info';
+  runs.forEach((r, k) => { marks['U' + k] = 'err'; });
+  pePv.open(PE_POA).then(() => pePv.setMarks(marks));
+}
+function peSelectLine(n) {
+  const ta = $('#pe_text'), lines = ta.value.split('\n');
+  let a = 0; for (let i = 0; i < n; i++) a += lines[i].length + 1;
+  ta.blur(); ta.setSelectionRange(a, a + (lines[n] || '').length); ta.focus();
+}
+function peLineAtCursor() { const ta = $('#pe_text'); return ta.value.slice(0, ta.selectionStart).split('\n').length - 1; }
+async function poaFromPdf(f) {
+  if (!/\.pdf$/i.test(f.name)) { toast('Нужен файл PDF основной доверенности'); return; }
+  const data = await f.arrayBuffer();
+  let r; try { r = await ckReadPdf(data.slice(0)); } catch (e) { toast('Не удалось прочитать PDF: ' + e.message); return; }
+  if (r.chars < 40) { toast('В PDF нет текстового слоя: распознайте его (например, в FineReader) и загрузите снова'); return; }
+  const g = poaGuessFromPdf(r.paras, f.name);
+  openPoaEditor(null, false, g, { name: f.name, size: f.size, at: Date.now(), data });
+}
+function bindPe() {
+  pePv = makePdfView($('#pePdfView'), { emptyHtml: () => '', otherHtml: '', source: async () => pe.rec ? { rec: pe.rec, loc: pe.loc, v: pe.v } : null, poa: () => PE_POA,
+    onPick: id => { if (id[0] === 'L') { peSelectLine(Number(id.slice(1))); pePv.show(id, false); } else pePv.show(id, false); } });
+  $('#pe_text').addEventListener('input', debounce(() => { if (pe.W) peVerify(); }, 700));
+  const sync = () => { if (!pe.loc) return; const id = 'L' + peLineAtCursor(); if (pe.loc.items[id]) pePv.show(id); };
+  $('#pe_text').addEventListener('click', sync);
+  $('#pe_text').addEventListener('keyup', e => { if (/^Arrow|^Page|^Home|^End/.test(e.key)) sync(); });
+  $('#peVer').addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    if (b.dataset.peline) peSelectLine(Number(b.dataset.peline));
+    if (b.dataset.peu) pePv.show(b.dataset.peu);
+  });
+  $('#pePdfFile').addEventListener('change', async e => { const f = e.target.files[0]; e.target.value = ''; if (!f) return; if (!/\.pdf$/i.test(f.name)) { toast('Нужен файл PDF'); return; } await peAttach({ name: f.name, size: f.size, at: Date.now(), data: await f.arrayBuffer() }); });
+  $('#poaPdfFile').addEventListener('change', e => { const f = e.target.files[0]; e.target.value = ''; if (f) poaFromPdf(f); });
+  // дата выдачи: срок «два года» и основание считаются от нее, пока поля не правили вручную
+  $('#pe_date').addEventListener('change', () => {
+    const d = $('#pe_date').value, num = $('#pe_number').value.trim(); if (!isIso(d)) return;
+    if (pe.years && !$('#pe_validUntil').value) { const [y, m, dd] = d.split('-'); $('#pe_validUntil').value = `${Number(y) + pe.years}-${m}-${dd}`; }
+    peAutoNames();
+  });
+  $('#pe_number').addEventListener('change', peAutoNames);
+  // PDF, брошенный в окно «Доверенности и бланки», добавляется как новая основная доверенность
+  const dlg = $('#dlgPoas');
+  dlg.addEventListener('dragover', e => { if (e.dataTransfer && [...e.dataTransfer.types].includes('Files')) { e.preventDefault(); dlg.classList.add('drag'); } });
+  dlg.addEventListener('dragleave', e => { if (e.target === dlg || !dlg.contains(e.relatedTarget)) dlg.classList.remove('drag'); });
+  dlg.addEventListener('drop', e => { e.preventDefault(); dlg.classList.remove('drag'); const f = e.dataTransfer.files[0]; if (!f) return; if (/\.pdf$/i.test(f.name)) poaFromPdf(f); else if (/\.docx$/i.test(f.name)) toast('Бланк Word добавляется кнопкой «Добавить бланк»'); else toast('Перетащите PDF основной доверенности'); });
+  const ed = $('#dlgPoaEdit');
+  ed.addEventListener('close', () => peReset());
+  ed.addEventListener('dragover', e => { if (e.dataTransfer && [...e.dataTransfer.types].includes('Files')) e.preventDefault(); });
+  ed.addEventListener('drop', async e => { e.preventDefault(); const f = e.dataTransfer.files[0]; if (f && /\.pdf$/i.test(f.name)) await peAttach({ name: f.name, size: f.size, at: Date.now(), data: await f.arrayBuffer() }); });
+}
+/* название и основание по дате и номеру, если их не меняли вручную */
+function peAutoNames() {
+  const d = $('#pe_date').value, num = $('#pe_number').value.trim(); if (!isIso(d) || !num) return;
+  const ed = $('#dlgPoaEdit'), auto = JSON.parse(ed.dataset.auto || '{}');
+  const basis = `доверенности от ${fmtDateShort(d)} № ${num}`;
+  if (!$('#pe_basis').value.trim() || $('#pe_basis').value === auto.basis) { $('#pe_basis').value = basis; auto.basis = basis; }
+  const who = (auto.agentShort ? ` (${auto.agentShort})` : '');
+  const name = `Доверенность от ${fmtDateShort(d)} № ${num}${who}`;
+  if (!$('#pe_name').value.trim() || $('#pe_name').value === auto.name || /^Доверенность( \(|$)/.test($('#pe_name').value)) { $('#pe_name').value = name; auto.name = name; }
+  ed.dataset.auto = JSON.stringify(auto);
 }
 
 /* ======================================================================
@@ -10008,7 +10349,7 @@ function init() {
   bindForm(); bindPowers(); bindDrafts(); bindPoas(); bindMisc(); bindTheme(); bindImport(); bindHelp(); bindCheck(); bindMk();
   renderPoaSelect(); renderPoaCard(); fillForm(); renderPowers(); renderChecks(); applyDocFont();
   renderPreview();
-  bind30(); bindCkPdf(); bindPdfViews();   // 3.1, 3.3
+  bind30(); bindCkPdf(); bindPdfViews(); bindPe();   // 3.1, 3.3, 3.6
   goScreen(ui.screen === 'sub' ? 'sub' : 'home', ui.step);   // 3.0: экран и шаг восстанавливаются, после 2.2 открывается стартовый экран
 }
 init();
